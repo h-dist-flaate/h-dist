@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -24,18 +25,19 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        .sig-bilde { background-color: white; padding: 4px; border-radius: 8px; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative">
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 p-2 rounded-lg shadow-blue-900/50 shadow-lg">
-                <i data-lucide="satellite" class="w-6 h-6 text-white"></i>
+                <img src="thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'satellite\' class=\'w-6 h-6 text-white\'></i>'">
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Sporing</p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Administrasjon</p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -45,9 +47,21 @@
         </div>
     </header>
 
-    <main class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
-        
-        <!-- Venstre kolonne -->
+    <!-- Fane-navigasjon -->
+    <nav class="bg-slate-800 border-b border-slate-700 px-4 py-2 flex gap-2 shrink-0 overflow-x-auto custom-scrollbar shadow-md z-10 relative">
+        <button id="tab-live" onclick="byttFane('live')" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-colors whitespace-nowrap">
+            <i data-lucide="map" class="w-4 h-4"></i> Live Kart
+        </button>
+        <button id="tab-faktura" onclick="byttFane('faktura')" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap">
+            <i data-lucide="receipt" class="w-4 h-4"></i> Til Fakturering <span id="badge-faktura" class="ml-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+        <button id="tab-ferdig" onclick="byttFane('ferdig')" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap">
+            <i data-lucide="check-square" class="w-4 h-4"></i> Ferdig Fakturert
+        </button>
+    </nav>
+
+    <!-- VIEW: LIVE KART -->
+    <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
                 <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-xl flex flex-col justify-center">
@@ -64,17 +78,72 @@
             <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl flex flex-col flex-1 overflow-hidden">
                 <div class="p-3 border-b border-slate-700 bg-slate-900/50 flex justify-between items-center shrink-0">
                     <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm uppercase"><i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Ordreoversikt</h2>
-                    <input type="text" id="sokeFelt" onkeyup="filtrerListe()" placeholder="Søk ordrenr/navn..." class="bg-slate-950 border border-slate-700 text-sm text-white px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 w-40 transition-all">
+                    <input type="text" id="sokeFeltLive" onkeyup="filtrerListe()" placeholder="Søk ordrenr/navn..." class="bg-slate-950 border border-slate-700 text-sm text-white px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 w-40 transition-all">
                 </div>
                 <div id="ordreListe" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
                     <div class="text-center p-8 text-slate-500 text-sm"><i data-lucide="loader" class="w-6 h-6 animate-spin mx-auto mb-2"></i>Henter live-data...</div>
                 </div>
             </div>
         </div>
-
-        <!-- Høyre kolonne: Kart -->
         <div class="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 shadow-xl flex flex-col overflow-hidden relative">
             <div class="flex-1 w-full bg-slate-900 relative"><div id="map"></div></div>
+        </div>
+    </main>
+
+    <!-- VIEW: TIL FAKTURERING -->
+    <main id="view-faktura" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-black text-white flex items-center gap-3"><i data-lucide="receipt" class="w-6 h-6 text-blue-500"></i> Godkjent for Fakturering</h2>
+                <p class="text-slate-400 text-sm">Viser alle leverte ordrer som ikke er fakturert enda.</p>
+            </div>
+            
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-4 border-b border-slate-700">Ordrenr</th>
+                                <th class="p-4 border-b border-slate-700">Mottaker</th>
+                                <th class="p-4 border-b border-slate-700">Vekt</th>
+                                <th class="p-4 border-b border-slate-700 text-center">Dokumentasjon</th>
+                                <th class="p-4 border-b border-slate-700 text-right">Handling</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liste-til-faktura" class="divide-y divide-slate-700">
+                            <!-- Fylles med JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW: FERDIG FAKTURERT -->
+    <main id="view-ferdig" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-black text-white flex items-center gap-3"><i data-lucide="check-square" class="w-6 h-6 text-green-500"></i> Arkiv: Ferdig Fakturert</h2>
+                <input type="text" id="sokeFeltArkiv" onkeyup="filtrerArkiv()" placeholder="Søk i arkiv..." class="bg-slate-800 border border-slate-700 text-sm text-white px-4 py-2 rounded-lg focus:outline-none focus:border-green-500 w-64 transition-all shadow-md">
+            </div>
+            
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-400">
+                        <thead class="bg-slate-900 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-4 border-b border-slate-700">Ordrenr</th>
+                                <th class="p-4 border-b border-slate-700">Mottaker</th>
+                                <th class="p-4 border-b border-slate-700 text-center">Dokumentasjon</th>
+                                <th class="p-4 border-b border-slate-700 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liste-ferdig-faktura" class="divide-y divide-slate-700">
+                            <!-- Fylles med JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -104,12 +173,28 @@
         </div>
     </div>
 
-    <!-- Vis Bilde Modal -->
+    <!-- Vis Signatur/Bilde Modal -->
     <div id="bildeModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
-        <div class="bg-slate-800 rounded-xl shadow-2xl p-4 w-full max-w-lg border border-slate-700 relative">
-            <button onclick="document.getElementById('bildeModal').classList.add('hidden')" class="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <h3 class="text-white font-bold mb-2">Fotobevis (Levert uten signatur)</h3>
-            <img id="visningBilde" src="" class="w-full rounded-lg border border-slate-600">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-4 w-full max-w-lg border border-slate-700 relative flex flex-col items-center">
+            <button onclick="document.getElementById('bildeModal').classList.add('hidden')" class="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg z-10"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="text-white font-bold mb-3 w-full text-left" id="bildeModalTittel">Leveringsdokumentasjon</h3>
+            <div class="w-full bg-slate-900 p-2 rounded-lg flex justify-center items-center overflow-hidden border border-slate-700">
+                <img id="visningBilde" src="" class="max-h-[60vh] max-w-full rounded-lg object-contain sig-bilde">
+            </div>
+            <p id="bildeModalTekst" class="text-slate-400 text-xs mt-3 w-full text-center"></p>
+        </div>
+    </div>
+
+    <!-- Historikk / Sporings Modal -->
+    <div id="historikkModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[140] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-700 relative flex flex-col max-h-[85vh]">
+            <button onclick="document.getElementById('historikkModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-xl font-black text-white mb-1 flex items-center gap-2"><i data-lucide="clock" class="text-blue-400"></i> Sporingslogg</h3>
+            <p id="historikkOrdrenr" class="text-slate-400 text-sm mb-6 pb-2 border-b border-slate-700 font-mono"></p>
+            
+            <div id="historikkListe" class="overflow-y-auto custom-scrollbar pr-2 flex-1">
+                <!-- Fylles automatisk med JS -->
+            </div>
         </div>
     </div>
 
@@ -119,18 +204,37 @@
 
         let db, auth, map, markersLayer, alleFraktbrev = [];
         let valgtTildelId = null;
+        let aktivFane = 'live';
 
         document.addEventListener('DOMContentLoaded', () => { initMap(); initFirebase(); });
 
+        window.byttFane = function(faneId) {
+            aktivFane = faneId;
+            document.getElementById('view-live').classList.add('hidden');
+            document.getElementById('view-faktura').classList.add('hidden');
+            document.getElementById('view-ferdig').classList.add('hidden');
+            
+            ['live', 'faktura', 'ferdig'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-700', 'text-slate-300');
+            });
+            
+            document.getElementById('view-' + faneId).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-' + faneId);
+            activeBtn.classList.remove('bg-slate-700', 'text-slate-300');
+            activeBtn.classList.add('bg-blue-600', 'text-white');
+            
+            if(faneId === 'live' && map) { setTimeout(() => { map.invalidateSize(); }, 100); }
+        }
+
+        // Esri ArcGIS kart som fungerer supert uten API-nøkkel
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([66.2, 13.5], 8);
             L.control.zoom({ position: 'bottomright' }).addTo(map);
-            
-            // NYTT KART: Esri World Street Map (Profesjonelt, gratis, blokkerer ikke GitHub)
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { 
                 attribution: '&copy; Esri' 
             }).addTo(map);
-            
             markersLayer = L.layerGroup().addTo(map);
         }
 
@@ -148,13 +252,27 @@
                     alleFraktbrev = [];
                     snapshot.forEach(doc => alleFraktbrev.push({ _id: doc.id, ...doc.data() }));
                     alleFraktbrev.sort((a, b) => (b.lagretTidspunkt || 0) - (a.lagretTidspunkt || 0));
-                    oppdaterSkjerm(alleFraktbrev);
+                    fordelDataTilSkjermer();
                 });
             } catch(e) { document.getElementById('connectionStatus').innerHTML = `<span class="text-red-500">Koblefeil</span>`; }
         }
 
-        function oppdaterSkjerm(dataListe) {
+        function fordelDataTilSkjermer() {
+            tegnLiveSkjerm(alleFraktbrev);
+            
+            const tilFaktura = alleFraktbrev.filter(o => (o.signature || o.photoProof) && !o.fakturert);
+            document.getElementById('badge-faktura').innerText = tilFaktura.length;
+            tegnFakturaListe(tilFaktura, 'liste-til-faktura', false);
+            
+            const ferdigFaktura = alleFraktbrev.filter(o => (o.signature || o.photoProof) && o.fakturert === true);
+            tegnFakturaListe(ferdigFaktura, 'liste-ferdig-faktura', true);
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function tegnLiveSkjerm(dataListe) {
             const listeContainer = document.getElementById('ordreListe');
+            const sokFelt = document.getElementById('sokeFeltLive').value.toLowerCase();
             listeContainer.innerHTML = '';
             markersLayer.clearLayers();
 
@@ -168,43 +286,54 @@
                 if (erLevert) { if (ordre.signertTidspunkt && ordre.signertTidspunkt > iDagMidnatt.getTime()) levertCount++; } 
                 else { aktiveCount++; }
 
-                let ikon = "package", farge = "text-slate-400", bg = "bg-slate-700";
-                if (erLevert) { ikon = ordre.photoProof ? "camera" : "check-circle"; farge = "text-green-400"; bg = "bg-green-900/20 opacity-60 border-green-900"; }
-                else if (ordre.status === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
-                else if (ordre.status === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
+                const matchSok = (`${ordre.sendingsnummer||''} ${ordre.mottaker?.navn||''} ${ordre.assignedTo||''} ${ordre.status||''}`.toLowerCase()).includes(sokFelt);
                 
-                let tildelBadge = '';
-                if (!erLevert) {
-                    if (ordre.assignedTo) {
-                        tildelBadge = `<button onclick="apneTildelModal('${ordre._id}', '${ordre.assignedTo}')" class="text-[10px] bg-blue-600/30 text-blue-300 hover:bg-blue-600 hover:text-white px-2 py-0.5 rounded border border-blue-500/50 mt-1 uppercase font-bold tracking-wider transition-colors"><i data-lucide="map" class="w-3 h-3 inline mr-1"></i>Rute: ${ordre.assignedTo}</button>`;
-                    } else {
-                        tildelBadge = `<button onclick="apneTildelModal('${ordre._id}', '')" class="text-[10px] bg-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white px-2 py-0.5 rounded border border-slate-600 mt-1 uppercase font-bold transition-colors">Tildel Rute +</button>`;
+                if (matchSok) {
+                    let ikon = "package", farge = "text-slate-400", bg = "bg-slate-700";
+                    if (erLevert) { ikon = ordre.photoProof ? "camera" : "pen-tool"; farge = "text-green-400"; bg = "bg-green-900/20 opacity-70 border-green-900"; }
+                    else if (ordre.status === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
+                    else if (ordre.status === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
+                    
+                    let tildelBadge = '';
+                    if (!erLevert) {
+                        if (ordre.assignedTo) {
+                            tildelBadge = `<button onclick="apneTildelModal('${ordre._id}', '${ordre.assignedTo}')" class="text-[10px] bg-blue-600/30 text-blue-300 hover:bg-blue-600 hover:text-white px-2 py-0.5 rounded border border-blue-500/50 mt-1 uppercase font-bold tracking-wider transition-colors"><i data-lucide="map" class="w-3 h-3 inline mr-1"></i>Rute: ${ordre.assignedTo}</button>`;
+                        } else {
+                            tildelBadge = `<button onclick="apneTildelModal('${ordre._id}', '')" class="text-[10px] bg-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white px-2 py-0.5 rounded border border-slate-600 mt-1 uppercase font-bold transition-colors">Tildel Rute +</button>`;
+                        }
                     }
+
+                    let bildeKnapp = '';
+                    const dok = ordre.signature || ordre.photoProof;
+                    if(dok) { 
+                        bildeKnapp = `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-purple-400 mr-1 shadow-sm"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>`; 
+                    }
+                    
+                    // Sporings-knapp
+                    const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-blue-400 mr-1 shadow-sm"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
+
+                    const element = document.createElement('div');
+                    element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
+                    element.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
+                            <div>
+                                <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] text-slate-400 font-normal ml-1">${ordre.status || 'Registrert'}</span></div>
+                                <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
+                                ${tildelBadge}
+                            </div>
+                        </div>
+                        <div class="text-right flex items-end">
+                            ${sporingKnapp}
+                            ${bildeKnapp}
+                            ${harGPS && erLevert ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : ''}
+                        </div>
+                    `;
+                    listeContainer.appendChild(element);
                 }
 
-                let bildeKnapp = '';
-                if(ordre.photoProof) { bildeKnapp = `<button onclick="visBilde('${ordre.photoProof}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-purple-400 mr-1"><i data-lucide="image" class="w-4 h-4"></i></button>`; }
-
-                const element = document.createElement('div');
-                element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
-                element.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
-                        <div>
-                            <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] text-slate-400 font-normal ml-1">${ordre.status || 'Registrert'}</span></div>
-                            <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
-                            ${tildelBadge}
-                        </div>
-                    </div>
-                    <div class="text-right flex items-end">
-                        ${bildeKnapp}
-                        ${harGPS && erLevert ? `<button onclick="map.setView([${ordre.gps.lat}, ${ordre.gps.lng}], 15)" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : ''}
-                    </div>
-                `;
-                listeContainer.appendChild(element);
-
                 if (harGPS && erLevert) {
-                    const typeIkon = ordre.photoProof ? '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>' : '<path d="M20 6 9 17l-5-5"/>';
+                    const typeIkon = ordre.photoProof ? '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>' : '<path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle>';
                     const customIcon = L.divIcon({ className: 'custom-pin', html: `<div class="w-6 h-6 bg-green-500 border-2 border-white rounded-full shadow-lg flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${typeIkon}</svg></div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
                     const popup = `<div class="text-slate-800 font-sans p-1 min-w-[150px]"><div class="font-bold border-b pb-1 mb-1">${ordre.sendingsnummer}</div><div class="text-sm"><b>Mottaker:</b> ${ordre.mottaker?.navn || ''}</div><div class="mt-1 text-xs text-green-600 font-bold flex items-center gap-1">✅ Levert (${ordre.photoProof ? 'Bilde' : 'Signatur'})</div></div>`;
                     L.marker([ordre.gps.lat, ordre.gps.lng], { icon: customIcon }).bindPopup(popup).addTo(markersLayer);
@@ -213,17 +342,122 @@
 
             document.getElementById('statAktive').innerText = aktiveCount;
             document.getElementById('statLevert').innerText = levertCount;
+        }
+
+        function tegnFakturaListe(dataListe, containerId, erFerdig) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            const sokFelt = erFerdig ? document.getElementById('sokeFeltArkiv').value.toLowerCase() : '';
+
+            if(dataListe.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500">Ingen oppdrag i denne mappen.</td></tr>`;
+                return;
+            }
+
+            dataListe.forEach(ordre => {
+                const matchSok = erFerdig === false || (`${ordre.sendingsnummer||''} ${ordre.mottaker?.navn||''}`.toLowerCase()).includes(sokFelt);
+                if (!matchSok) return;
+
+                let totalVekt = 0;
+                if (ordre.varer) { ordre.varer.forEach(v => { totalVekt += Number(v.vekt) || 0; }); }
+
+                const dok = ordre.signature || ordre.photoProof;
+                const bildeKnapp = dok ? `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="bg-slate-700 hover:bg-slate-600 text-purple-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="${ordre.photoProof ? 'Se Bilde' : 'Se Signatur'}"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>` : '';
+                const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="Vis sporing"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
+
+                let handlingKnapp = '';
+                if (!erFerdig) {
+                    handlingKnapp = `<button onclick="oppdaterFakturaStatus('${ordre._id}', true)" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg flex items-center gap-2 ml-auto transition-transform active:scale-95"><i data-lucide="check" class="w-4 h-4"></i> Fakturert</button>`;
+                } else {
+                    const fDato = ordre.fakturertTidspunkt ? new Date(ordre.fakturertTidspunkt).toLocaleDateString() : '';
+                    handlingKnapp = `<div class="flex items-center justify-end gap-2 text-green-400 font-bold"><i data-lucide="check-circle" class="w-4 h-4"></i> Fakturert ${fDato} <button onclick="oppdaterFakturaStatus('${ordre._id}', false)" title="Angre" class="ml-2 text-slate-500 hover:text-red-400 p-1"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/50 transition-colors";
+                
+                tr.innerHTML = `
+                    <td class="p-4 align-middle">
+                        <div class="font-black text-white text-sm">${ordre.sendingsnummer || 'Ukjent'}</div>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">Status: ${ordre.status || 'Levert'}</div>
+                    </td>
+                    <td class="p-4 align-middle">
+                        <div class="font-bold text-slate-200">${ordre.mottaker?.navn || 'Ukjent'}</div>
+                        <div class="text-xs text-slate-400">${ordre.mottaker?.postnr || ''} ${ordre.mottaker?.sted || ''}</div>
+                    </td>
+                    ${!erFerdig ? `<td class="p-4 align-middle text-slate-300 font-medium">${totalVekt.toFixed(1)} kg</td>` : ''}
+                    <td class="p-4 align-middle text-center"><div class="flex items-center justify-center gap-2">${sporingKnapp}${bildeKnapp}</div></td>
+                    <td class="p-4 align-middle text-right">${handlingKnapp}</td>
+                `;
+                container.appendChild(tr);
+            });
+        }
+
+        window.visHistorikk = function(id) {
+            const ordre = alleFraktbrev.find(o => o._id === id);
+            if(!ordre) return;
+            
+            document.getElementById('historikkOrdrenr').innerText = 'Ordre: ' + (ordre.sendingsnummer || id);
+            const container = document.getElementById('historikkListe');
+            container.innerHTML = '';
+
+            if (!ordre.historikk || ordre.historikk.length === 0) {
+                container.innerHTML = '<div class="text-slate-400 text-sm text-center p-8 flex flex-col items-center gap-2"><i data-lucide="info" class="w-8 h-8 opacity-50"></i> Ingen sporingshistorikk funnet.</div>';
+            } else {
+                // Sorter nyeste hendelse øverst
+                const historikkSortert = [...ordre.historikk].sort((a,b) => b.tidspunkt - a.tidspunkt);
+                
+                historikkSortert.forEach(hendelse => {
+                    const dato = new Date(hendelse.tidspunkt).toLocaleString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    
+                    let ikon = "check-circle", farge = "text-slate-400";
+                    if(hendelse.status.includes('bil')) { ikon = 'truck'; farge = 'text-blue-400'; }
+                    if(hendelse.status.includes('terminal')) { ikon = 'building'; farge = 'text-yellow-400'; }
+                    if(hendelse.status.includes('Levert')) { ikon = 'check'; farge = 'text-green-400'; }
+
+                    container.innerHTML += `
+                        <div class="relative pl-8 border-l-2 border-slate-600 pb-5 last:border-0 last:pb-0 ml-3">
+                            <div class="absolute -left-[13px] top-0 bg-slate-800 p-1 rounded-full border-2 border-slate-600 shadow-md">
+                                <i data-lucide="${ikon}" class="w-4 h-4 ${farge}"></i>
+                            </div>
+                            <div class="text-xs text-slate-400 font-bold mb-1">${dato}</div>
+                            <div class="text-white font-bold text-base tracking-wide">${hendelse.status}</div>
+                            <div class="text-xs text-slate-400 mt-1 uppercase tracking-widest"><span class="text-slate-500">Av:</span> ${hendelse.rute || 'Ukjent'} <span class="lowercase text-slate-600 ml-1">(${hendelse.utfortAv || 'System'})</span></div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('historikkModal').classList.remove('hidden');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        window.visBilde = function(b64) {
-            document.getElementById('visningBilde').src = b64;
-            document.getElementById('bildeModal').classList.remove('hidden');
+        window.oppdaterFakturaStatus = async function(id, status) {
+            if(!db || !id) return;
+            const { doc, updateDoc } = window.firebaseModules;
+            try { 
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', id), { 
+                    fakturert: status,
+                    fakturertTidspunkt: status ? Date.now() : null
+                }); 
+            } 
+            catch (e) { alert("Kunne ikke oppdatere: " + e.message); }
         }
 
-        window.filtrerListe = function() {
-            const sokFelt = document.getElementById('sokeFelt').value.toLowerCase();
-            oppdaterSkjerm(alleFraktbrev.filter(o => (`${o.sendingsnummer||''} ${o.mottaker?.navn||''} ${o.assignedTo||''} ${o.status||''}`.toLowerCase()).includes(sokFelt)));
+        window.kartFokus = function(lat, lng) {
+            byttFane('live');
+            map.setView([lat, lng], 15);
+        }
+
+        window.filtrerListe = function() { fordelDataTilSkjermer(); }
+        window.filtrerArkiv = function() { fordelDataTilSkjermer(); }
+
+        window.visBilde = function(b64, isPhoto) {
+            document.getElementById('visningBilde').src = b64;
+            document.getElementById('bildeModalTittel').innerText = isPhoto ? "Fotobevis for levering" : "Kundens Signatur";
+            document.getElementById('bildeModalTekst').innerText = isPhoto ? "Sjåfør valgte levering uten signatur." : "Signert for mottak på mobil.";
+            if(!isPhoto) { document.getElementById('visningBilde').classList.add('bg-white'); } else { document.getElementById('visningBilde').classList.remove('bg-white'); }
+            document.getElementById('bildeModal').classList.remove('hidden');
         }
 
         window.apneTildelModal = function(id, currentAssigned) {
@@ -237,16 +471,23 @@
         window.lagreTildeling = async function() {
             if(!db || !valgtTildelId) return;
             const ruteInput = document.getElementById('tildelInput').value;
-            const { doc, updateDoc } = window.firebaseModules;
-            try { await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: ruteInput }); lukkTildelModal(); } 
-            catch (e) { alert(e.message); }
+            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
+            try { 
+                const hendelse = { status: 'Tildelt Rute', tidspunkt: Date.now(), rute: ruteInput, utfortAv: 'Flåtesentral' };
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: ruteInput, historikk: arrayUnion(hendelse) }); 
+                lukkTildelModal(); 
+            } catch (e) { alert(e.message); }
         }
         window.fjernTildeling = async function() {
             if(!db || !valgtTildelId) return;
-            const { doc, updateDoc } = window.firebaseModules;
-            try { await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: null }); lukkTildelModal(); } 
-            catch (e) { alert(e.message); }
+            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
+            try { 
+                const hendelse = { status: 'Fjernet fra Rute', tidspunkt: Date.now(), rute: '-', utfortAv: 'Flåtesentral' };
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: null, historikk: arrayUnion(hendelse) }); 
+                lukkTildelModal(); 
+            } catch (e) { alert(e.message); }
         }
     </script>
 </body>
 </html>
+```
