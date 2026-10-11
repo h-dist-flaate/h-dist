@@ -125,7 +125,12 @@
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([66.2, 13.5], 8);
             L.control.zoom({ position: 'bottomright' }).addTo(map);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM', maxZoom: 19 }).addTo(map);
+            
+            // NYTT KART: Esri World Street Map (Profesjonelt, gratis, blokkerer ikke GitHub)
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { 
+                attribution: '&copy; Esri' 
+            }).addTo(map);
+            
             markersLayer = L.layerGroup().addTo(map);
         }
 
@@ -163,13 +168,11 @@
                 if (erLevert) { if (ordre.signertTidspunkt && ordre.signertTidspunkt > iDagMidnatt.getTime()) levertCount++; } 
                 else { aktiveCount++; }
 
-                // Visuell Status (Ikon & Farge)
                 let ikon = "package", farge = "text-slate-400", bg = "bg-slate-700";
                 if (erLevert) { ikon = ordre.photoProof ? "camera" : "check-circle"; farge = "text-green-400"; bg = "bg-green-900/20 opacity-60 border-green-900"; }
                 else if (ordre.status === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
                 else if (ordre.status === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
                 
-                // Rute-knapp
                 let tildelBadge = '';
                 if (!erLevert) {
                     if (ordre.assignedTo) {
