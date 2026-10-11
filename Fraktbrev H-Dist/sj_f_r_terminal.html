@@ -13,14 +13,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // La til arrayUnion for å kunne legge til elementer i historikk-listen
         window.firebaseModules = { initializeApp, getFirestore, doc, getDoc, updateDoc, collection, onSnapshot, getAuth, signInAnonymously, arrayUnion };
     </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overscroll-behavior-y: contain; }
-        #signaturePad { border: 2px dashed #475569; border-radius: 0.75rem; cursor: crosshair; touch-action: none; background: #1e293b; }
+        /* Her er bakgrunnen på tegnebrettet gjort lyst (hvitt) */
+        #signaturePad { border: 2px dashed #475569; border-radius: 0.75rem; cursor: crosshair; touch-action: none; background: #f8fafc; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
@@ -30,8 +30,8 @@
 
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg shrink-0 z-10">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600 p-2 rounded-lg shadow-lg" onclick="apneBilValg()">
-                <i data-lucide="truck" class="w-6 h-6 text-white"></i>
+            <div class="bg-slate-800 p-2 rounded-lg shadow-blue-900/50 shadow-lg border border-slate-700" onclick="apneBilValg()">
+                <img src="thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-6 h-6 text-white\'></i>'">
             </div>
             <div>
                 <h1 class="text-sm font-black tracking-wider text-white uppercase" id="headerTittel">VELG RUTE</h1>
@@ -144,8 +144,8 @@
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md flex flex-col border border-slate-700">
             <h3 class="text-xl font-bold mb-1 text-white">Kundens Signatur</h3>
             <p class="text-slate-400 text-xs mb-3">La kunden signere for mottak i feltet under.</p>
-            <div class="relative mb-4 bg-slate-900 rounded-xl">
-                <canvas id="signaturePad" class="w-full h-[200px]"></canvas>
+            <div class="relative mb-4 bg-slate-900 rounded-xl w-full h-[200px]" id="canvasContainer">
+                <canvas id="signaturePad" class="w-full h-full"></canvas>
             </div>
             
             <div class="flex gap-2 justify-end mb-4">
@@ -312,12 +312,10 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // OPPDATERT: Nå lagrer vi også et sporings-element ("historikk") i databasen hver gang statusen endres
         window.oppdaterStatus = async function(nyStatus) {
             if(!db || !gjeldendeOrdreId) return;
             const { doc, updateDoc, arrayUnion } = window.firebaseModules;
             try {
-                // Oppretter en logg-hendelse med dato, status og hvem som gjorde det
                 const hendelse = {
                     status: nyStatus,
                     tidspunkt: Date.now(),
@@ -327,7 +325,7 @@
 
                 const updateData = { 
                     status: nyStatus,
-                    historikk: arrayUnion(hendelse) // Dette legger hendelsen til i en liste (historikk) i skyen
+                    historikk: arrayUnion(hendelse) 
                 };
 
                 if (nyStatus === 'På bil') { updateData.assignedTo = minBilId; }
@@ -359,15 +357,22 @@
             const modal = document.getElementById('signatureModal');
             modal.classList.remove('hidden'); 
             
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio; 
-            canvas.height = canvas.offsetHeight * ratio;
-            ctx.scale(ratio, ratio);
-            ctx.lineWidth = 4; 
-            ctx.lineCap = 'round'; 
-            ctx.strokeStyle = '#f8fafc';
-            
-            tomSignatur(); 
+            setTimeout(() => {
+                const container = document.getElementById('canvasContainer');
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                
+                canvas.width = container.offsetWidth * ratio; 
+                canvas.height = container.offsetHeight * ratio;
+                
+                ctx.scale(ratio, ratio);
+                ctx.lineWidth = 4; 
+                ctx.lineCap = 'round'; 
+                
+                // Her settes pennen til mørkeblå/svart!
+                ctx.strokeStyle = '#0f172a';
+                
+                tomSignatur(); 
+            }, 50);
         }
         
         window.lukkSignatur = () => { document.getElementById('signatureModal').classList.add('hidden'); }
@@ -378,7 +383,6 @@
             if (canvas.toDataURL() === blank.toDataURL()) { alert("Vennligst signer først."); return; }
             const b64 = canvas.toDataURL("image/png");
             
-            // Vi sender med at historikk skal oppdateres også for levering
             const hendelse = { status: 'Levert', tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Sjåfør (Signatur)' };
             
             sendLeveringTilSky({ signature: b64, status: 'Levert', signertTidspunkt: Date.now(), historikk: window.firebaseModules.arrayUnion(hendelse) }, 'btnGodkjennSignatur', 'LAGRE SIGNATUR');
@@ -445,27 +449,23 @@
             document.getElementById('scannerModal').classList.remove('hidden');
             if (html5QrcodeScanner) { html5QrcodeScanner.clear(); }
             html5QrcodeScanner = new Html5Qrcode("reader");
-            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, onScanSuccess).catch(e => { lukkScanner(); alert("Kamerafeil"); });
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, async (decodedText) => {
+                lukkScanner();
+                if (!db) return;
+                const nrMatch = decodedText.match(/\b\d{8,25}\b/);
+                const idOppslag = nrMatch ? nrMatch[0] : decodedText;
+                
+                try {
+                    const { doc, getDoc } = window.firebaseModules;
+                    const docSnap = await getDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', idOppslag));
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if(data.signature || data.photoProof) { visMelding("Allerede levert", "Dette fraktbrevet er ferdig levert og arkivert."); return; }
+                        visLeveringPåSkjerm({_id: docSnap.id, ...data});
+                    } else { visMelding("Ikke funnet i skyen", `Fant ikke pakke med nummer ${idOppslag}. Opprett fraktbrevet først.`); }
+                } catch(e) { visMelding("Feil", e.message); }
+            }).catch(e => { lukkScanner(); visMelding("Kamerafeil", "Tillat bruk av kamera."); });
         }
         window.lukkScanner = function() { if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(e=>{}); document.getElementById('scannerModal').classList.add('hidden'); }
-
-        async function onScanSuccess(decodedText) {
-            lukkScanner();
-            if (!db) return;
-            const nrMatch = decodedText.match(/\b\d{8}\b/);
-            const idOppslag = nrMatch ? nrMatch[0] : decodedText;
-            
-            try {
-                const { doc, getDoc } = window.firebaseModules;
-                const docSnap = await getDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', idOppslag));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if(data.signature || data.photoProof) { visMelding("Allerede levert", "Dette fraktbrevet er ferdig levert og arkivert."); return; }
-                    visLeveringPåSkjerm({_id: docSnap.id, ...data});
-                } else { visMelding("Ikke funnet i skyen", `Fant ikke pakke med nummer ${idOppslag}. Opprett fraktbrevet først.`); }
-            } catch(e) { visMelding("Feil", e.message); }
-        }
     </script>
 </body>
-</html>
-```
