@@ -12,9 +12,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        /* HER ER FIKSEN: arrayUnion er nå lagt til i listen under! */
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        window.firebaseModules = { initializeApp, getFirestore, collection, onSnapshot, doc, updateDoc, getAuth, signInAnonymously };
+        window.firebaseModules = { initializeApp, getFirestore, collection, onSnapshot, doc, updateDoc, getAuth, signInAnonymously, arrayUnion };
     </script>
 
     <style>
