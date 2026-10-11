@@ -12,7 +12,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        /* HER ER FIKSEN: arrayUnion er nå lagt til i listen under! */
         import { getFirestore, collection, onSnapshot, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         window.firebaseModules = { initializeApp, getFirestore, collection, onSnapshot, doc, updateDoc, getAuth, signInAnonymously, arrayUnion };
@@ -37,7 +36,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Administrasjon <span class="text-blue-400 font-bold ml-1">v1.2</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Administrasjon <span class="text-blue-400 font-bold ml-1">v1.3</span></p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -198,6 +197,56 @@
         </div>
     </div>
 
+    <!-- Vis Fraktbrev Modal -->
+    <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
+            <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-black text-white flex items-center gap-2"><i data-lucide="file-text" class="text-blue-400"></i> Fraktbrev: <span id="fbModalOrdrenr" class="text-white"></span></h3>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                        <h4 class="text-xs text-slate-400 font-bold uppercase mb-2 flex items-center gap-2"><i data-lucide="building-2" class="w-4 h-4"></i> Avsender</h4>
+                        <div id="fbModalAvsender" class="text-sm text-slate-200"></div>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                        <h4 class="text-xs text-slate-400 font-bold uppercase mb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Mottaker</h4>
+                        <div id="fbModalMottaker" class="text-sm text-slate-200"></div>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <h4 class="text-xs text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> Fraktinformasjon</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-slate-200" id="fbModalInfo">
+                        <!-- Fylles automatisk -->
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-700 text-sm">
+                        <span class="text-slate-400 font-bold">Instrukser:</span> <span id="fbModalInstrukser" class="text-slate-200 italic"></span>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-3">Antall/Emb</th>
+                                <th class="p-3">Beskrivelse (Merk)</th>
+                                <th class="p-3 text-center">Vekt</th>
+                                <th class="p-3 text-center">Volum</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fbModalGods" class="divide-y divide-slate-800">
+                            <!-- Varelinjer fylles her -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -303,14 +352,15 @@
                         }
                     }
 
+                    // Knapper
+                    const dokInfoKnapp = `<button onclick="visFraktbrevDetaljer('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-orange-400 mr-1 shadow-sm" title="Se Fraktbrev"><i data-lucide="file-text" class="w-4 h-4"></i></button>`;
+                    const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-blue-400 mr-1 shadow-sm" title="Se Historikk"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
                     let bildeKnapp = '';
                     const dok = ordre.signature || ordre.photoProof;
                     if(dok) { 
-                        bildeKnapp = `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-purple-400 mr-1 shadow-sm"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>`; 
+                        bildeKnapp = `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-purple-400 mr-1 shadow-sm" title="Se Signatur/Bilde"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>`; 
                     }
-                    
-                    // Sporings-knapp
-                    const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-blue-400 mr-1 shadow-sm"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
+                    const kartKnapp = harGPS && erLevert ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm" title="Vis på kart"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : '';
 
                     const element = document.createElement('div');
                     element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
@@ -324,9 +374,10 @@
                             </div>
                         </div>
                         <div class="text-right flex items-end">
+                            ${dokInfoKnapp}
                             ${sporingKnapp}
                             ${bildeKnapp}
-                            ${harGPS && erLevert ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : ''}
+                            ${kartKnapp}
                         </div>
                     `;
                     listeContainer.appendChild(element);
@@ -362,9 +413,10 @@
                 let totalVekt = 0;
                 if (ordre.varer) { ordre.varer.forEach(v => { totalVekt += Number(v.vekt) || 0; }); }
 
+                const dokInfoKnapp = `<button onclick="visFraktbrevDetaljer('${ordre._id}')" class="bg-slate-700 hover:bg-slate-600 text-orange-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="Se Fraktbrev"><i data-lucide="file-text" class="w-4 h-4"></i></button>`;
+                const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="Vis sporing"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
                 const dok = ordre.signature || ordre.photoProof;
                 const bildeKnapp = dok ? `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="bg-slate-700 hover:bg-slate-600 text-purple-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="${ordre.photoProof ? 'Se Bilde' : 'Se Signatur'}"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>` : '';
-                const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="Vis sporing"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
 
                 let handlingKnapp = '';
                 if (!erFerdig) {
@@ -387,11 +439,72 @@
                         <div class="text-xs text-slate-400">${ordre.mottaker?.postnr || ''} ${ordre.mottaker?.sted || ''}</div>
                     </td>
                     ${!erFerdig ? `<td class="p-4 align-middle text-slate-300 font-medium">${totalVekt.toFixed(1)} kg</td>` : ''}
-                    <td class="p-4 align-middle text-center"><div class="flex items-center justify-center gap-2">${sporingKnapp}${bildeKnapp}</div></td>
+                    <td class="p-4 align-middle text-center"><div class="flex items-center justify-center gap-2">${dokInfoKnapp}${sporingKnapp}${bildeKnapp}</div></td>
                     <td class="p-4 align-middle text-right">${handlingKnapp}</td>
                 `;
                 container.appendChild(tr);
             });
+        }
+
+        // --- Fraktbrev Detalje-visning ---
+        window.visFraktbrevDetaljer = function(id) {
+            const ordre = alleFraktbrev.find(o => o._id === id);
+            if(!ordre) return;
+
+            document.getElementById('fbModalOrdrenr').innerText = ordre.sendingsnummer || id;
+            
+            // Avsender
+            let avs = ordre.avsender || {};
+            document.getElementById('fbModalAvsender').innerHTML = `
+                <strong class="text-white text-base">${avs.navn||'Ikke oppgitt'}</strong><br>
+                ${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}<br>
+                <span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref: ${avs.ref||'-'}</span>`;
+            
+            // Mottaker
+            let mot = ordre.mottaker || {};
+            document.getElementById('fbModalMottaker').innerHTML = `
+                <strong class="text-white text-base">${mot.navn||'Ikke oppgitt'}</strong><br>
+                ${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}<br>
+                <span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref/Tlf: ${mot.ref||'-'}</span>`;
+
+            // Info
+            document.getElementById('fbModalInfo').innerHTML = `
+                <div><span class="text-slate-400 block text-xs uppercase mb-1">Dato</span><span class="font-medium">${ordre.dato||'-'}</span></div>
+                <div><span class="text-slate-400 block text-xs uppercase mb-1">Transportør</span><span class="font-medium">${ordre.transportor||'-'}</span></div>
+                <div><span class="text-slate-400 block text-xs uppercase mb-1">Incoterms</span><span class="font-medium">${ordre.incoterms||'-'}</span></div>
+                <div><span class="text-slate-400 block text-xs uppercase mb-1">Fraktbetaler</span><span class="font-medium">${ordre.betaler||'-'}</span></div>
+            `;
+            document.getElementById('fbModalInstrukser').innerText = ordre.instrukser || 'Ingen spesielle instrukser registrert.';
+
+            // Gods
+            const tbody = document.getElementById('fbModalGods');
+            tbody.innerHTML = '';
+            let totVekt = 0, totVolum = 0, totAntall = 0;
+            
+            if (ordre.varer && ordre.varer.length > 0) {
+                ordre.varer.forEach(v => {
+                    totAntall += Number(v.antall) || 0; totVekt += Number(v.vekt) || 0; totVolum += Number(v.volum) || 0;
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-800 transition-colors">
+                            <td class="p-3 font-bold">${v.antall} ${v.emballasje||''}</td>
+                            <td class="p-3">${v.art||''} <span class="text-xs text-slate-500 ml-1">(${v.merk||''})</span></td>
+                            <td class="p-3 text-center text-blue-400 font-medium">${v.vekt ? v.vekt + ' kg' : '-'}</td>
+                            <td class="p-3 text-center text-blue-400 font-medium">${v.volum ? v.volum + ' m³' : '-'}</td>
+                        </tr>`;
+                });
+                tbody.innerHTML += `
+                    <tr class="bg-slate-900 border-t border-slate-700">
+                        <td class="p-3 font-black text-white text-lg">${totAntall}</td>
+                        <td class="p-3 text-right text-slate-400 font-bold text-xs uppercase tracking-wider">Total Sum:</td>
+                        <td class="p-3 text-center text-white font-black">${totVekt > 0 ? totVekt.toFixed(1) + ' kg' : '-'}</td>
+                        <td class="p-3 text-center text-white font-black">${totVolum > 0 ? totVolum.toFixed(2) + ' m³' : '-'}</td>
+                    </tr>`;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500"><i data-lucide="package-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Ingen varelinjer lagret.</td></tr>`;
+            }
+
+            document.getElementById('fraktbrevModal').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         window.visHistorikk = function(id) {
