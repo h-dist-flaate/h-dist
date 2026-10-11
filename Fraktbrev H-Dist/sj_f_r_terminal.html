@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sjåførterminal</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        window.firebaseModules = { initializeApp, getFirestore, doc, getDoc, updateDoc, collection, onSnapshot, getAuth, signInAnonymously };
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overscroll-behavior-y: contain; }
+        #signaturePad { border: 2px dashed #475569; border-radius: 0.75rem; cursor: crosshair; touch-action: none; background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg shrink-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg shadow-lg" onclick="apneBilValg()">
+                <i data-lucide="truck" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-black tracking-wider text-white uppercase" id="headerTittel">VELG RUTE</h1>
+                <p id="cloudStatus" class="text-xs text-yellow-500 font-medium tracking-widest uppercase flex items-center gap-1">
+                    <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Kobler til...
+                </p>
+            </div>
+        </div>
+        <button onclick="apneBilValg()" class="text-slate-400 hover:text-white bg-slate-800 p-2 rounded-lg border border-slate-700">
+            <i data-lucide="map" class="w-5 h-5"></i>
+        </button>
+    </header>
+
+    <main id="hovedskjerm" class="flex-1 flex flex-col overflow-hidden">
+        <div class="p-6 flex flex-col items-center justify-center shrink-0 border-b border-slate-800 bg-slate-900/50">
+            <button onclick="startScanner()" class="w-40 h-40 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)] border-4 border-slate-800 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 mb-2">
+                <i data-lucide="scan-line" class="w-12 h-12 text-white"></i>
+                <span class="text-lg font-black text-white tracking-widest">SKANN</span>
+            </button>
+            <p class="text-slate-400 text-xs text-center">Skann etikett for å laste inn/ut av bil,<br>eller velg fra ruten din under.</p>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-900">
+            <div class="p-3 bg-slate-800 border-b border-slate-700 flex justify-between items-center shadow-md z-10">
+                <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm uppercase tracking-wider">
+                    <i data-lucide="package" class="w-4 h-4 text-blue-400"></i> Oppdrag på min rute
+                </h2>
+                <span id="ruteTeller" class="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+            </div>
+            <div id="ruteListe" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3"></div>
+        </div>
+    </main>
+
+    <main id="leveringsskjerm" class="flex-1 flex-col overflow-y-auto p-4 hidden bg-slate-900">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="avbrytLevering()" class="bg-slate-800 p-2 rounded-lg text-slate-300 hover:text-white border border-slate-700 shadow-md">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white uppercase tracking-wider">Ordre <span id="infoSendingsnrTop" class="text-blue-400"></span></h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden mb-6">
+            <div class="bg-blue-900/40 p-4 border-b border-slate-700 flex justify-between items-center">
+                <div>
+                    <div class="text-xs text-slate-400 font-bold uppercase mb-1">Status</div>
+                    <div id="infoStatus" class="text-sm font-black text-white tracking-wider flex items-center gap-2"></div>
+                </div>
+            </div>
+            
+            <div class="p-5 space-y-5">
+                <div>
+                    <div class="text-xs text-slate-400 font-bold uppercase mb-1">Mottaker</div>
+                    <div id="infoMottakerNavn" class="text-lg font-bold text-white"></div>
+                    <div id="infoMottakerAdresse" class="text-slate-300 text-sm"></div>
+                    <div id="infoMottakerSted" class="text-slate-300 text-sm font-medium"></div>
+                </div>
+                <div class="border-t border-slate-700 pt-4 grid grid-cols-2 gap-4">
+                    <div><div class="text-xs text-slate-400 font-bold uppercase mb-1">Avsender</div><div id="infoAvsenderNavn" class="text-sm font-medium text-slate-200"></div></div>
+                    <div><div class="text-xs text-slate-400 font-bold uppercase mb-1">Vekt / Volum</div><div class="text-sm font-medium text-slate-200"><span id="infoVekt"></span> kg</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <button onclick="oppdaterStatus('På bil')" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 active:bg-blue-900 text-white py-4 rounded-xl font-bold shadow-lg flex flex-col items-center justify-center gap-1 transition-colors">
+                <i data-lucide="truck" class="w-6 h-6 text-blue-400"></i> <span class="text-xs uppercase tracking-wider">Inn på bil</span>
+            </button>
+            <button onclick="oppdaterStatus('På terminal')" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 active:bg-yellow-900 text-white py-4 rounded-xl font-bold shadow-lg flex flex-col items-center justify-center gap-1 transition-colors">
+                <i data-lucide="building" class="w-6 h-6 text-yellow-400"></i> <span class="text-xs uppercase tracking-wider">Ut på terminal</span>
+            </button>
+        </div>
+        <button onclick="apneSignaturModal()" class="w-full bg-green-600 hover:bg-green-500 text-white py-5 rounded-xl font-black text-lg shadow-lg flex items-center justify-center gap-2 mb-8 transition-transform active:scale-[0.98]">
+            <i data-lucide="check-circle" class="w-6 h-6"></i> LEVER TIL KUNDE
+        </button>
+    </main>
+
+    <div id="bilModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[120] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
+            <h3 class="text-xl font-black mb-2 text-white flex items-center gap-2"><i data-lucide="map" class="text-blue-400"></i> Hvilken rute?</h3>
+            <p class="text-slate-400 mb-4 text-sm">Velg ruten du kjører i dag for å se oppdragene dine.</p>
+            <select id="bilIdInput" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 mb-6 font-bold text-center appearance-none">
+                <option value="">-- Velg Rute --</option>
+                <option value="Nesna">1. Nesna</option>
+                <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
+                <option value="Lovund">3. Lovund</option>
+                <option value="Mo">4. Mo</option>
+                <option value="Sandnessjøen">5. Sandnessjøen</option>
+                <option value="Mosjøen">6. Mosjøen</option>
+            </select>
+            <button onclick="lagreBilValg()" class="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold w-full shadow-lg uppercase tracking-wider">Start Rute</button>
+        </div>
+    </div>
+
+    <div id="scannerModal" class="hidden fixed inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-[90] p-4 backdrop-blur-sm">
+        <div class="w-full max-w-lg bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700">
+            <button type="button" onclick="lukkScanner()" class="absolute top-4 right-4 bg-slate-800 hover:bg-red-500 text-white rounded-full p-2 z-10 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 bg-slate-800 border-b border-slate-700 text-center">
+                <h3 class="font-black text-white text-xl">Skann Etikett</h3>
+                <p class="text-sm text-slate-400 mt-1">Sikt på strekkoden for å behandle pakken.</p>
+            </div>
+            <div id="reader" style="width: 100%; min-height: 350px; background: black;"></div>
+        </div>
+    </div>
+
+    <div id="signatureModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md flex flex-col border border-slate-700">
+            <h3 class="text-xl font-bold mb-1 text-white">Kundens Signatur</h3>
+            <p class="text-slate-400 text-xs mb-3">La kunden signere for mottak i feltet under.</p>
+            <div class="relative mb-4 bg-slate-900 rounded-xl">
+                <canvas id="signaturePad" width="380" height="200" class="w-full h-[200px]"></canvas>
+            </div>
+            
+            <div class="flex gap-2 justify-end mb-4">
+                <button type="button" onclick="lukkSignatur()" class="px-4 py-3 bg-slate-700 text-slate-200 rounded-xl font-bold flex-1 text-sm">Avbryt</button>
+                <button type="button" onclick="tomSignatur()" class="px-4 py-3 bg-red-900/30 text-red-400 border border-red-900/50 rounded-xl font-bold text-sm">Visk ut</button>
+            </div>
+            <button type="button" id="btnGodkjennSignatur" onclick="lagreSignatur()" class="w-full px-5 py-4 bg-green-600 text-white hover:bg-green-500 rounded-xl font-black flex items-center justify-center gap-2 shadow-lg mb-3">
+                <i data-lucide="pen-tool" class="w-6 h-6"></i> LAGRE SIGNATUR
+            </button>
+            
+            <div class="relative flex items-center py-2">
+                <div class="flex-grow border-t border-slate-700"></div>
+                <span class="flex-shrink-0 mx-4 text-slate-500 text-xs font-bold uppercase">Eller</span>
+                <div class="flex-grow border-t border-slate-700"></div>
+            </div>
+
+            <!-- Usynlig filopplasting for kamera -->
+            <input type="file" id="kameraInput" accept="image/*" capture="environment" class="hidden" onchange="handterBilde(event)">
+            
+            <button type="button" id="btnTaBilde" onclick="document.getElementById('kameraInput').click()" class="mt-2 w-full px-5 py-4 bg-slate-700 text-white hover:bg-slate-600 rounded-xl font-bold flex items-center justify-center gap-2 border border-slate-600">
+                <i data-lucide="camera" class="w-5 h-5"></i> LEVER UTEN SIGNATUR (BILDE)
+            </button>
+        </div>
+    </div>
+
+    <div id="msgModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[130] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-slate-700">
+            <h3 id="msgModalTitle" class="text-xl font-black mb-2 text-white mt-4"></h3>
+            <p id="msgModalText" class="text-slate-300 mb-6 text-sm whitespace-pre-wrap"></p>
+            <button onclick="document.getElementById('msgModal').classList.add('hidden')" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold w-full shadow-lg">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
+        const configAppId = "fraktbrev-h-dist";
+
+        let db = null, auth = null, gjeldendeOrdreId = null, minBilId = "";
+        let ruteLytter = null;
+        let canvas, ctx, isDrawing = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setupSignaturePad();
+            initFirebase();
+            
+            minBilId = localStorage.getItem('hdist_rute_id') || "";
+            if (!minBilId) { apneBilValg(); } else {
+                document.getElementById('headerTittel').innerText = minBilId.toUpperCase();
+                document.getElementById('bilIdInput').value = minBilId;
+            }
+        });
+
+        window.visMelding = function(tittel, tekst) {
+            document.getElementById('msgModalTitle').innerText = tittel;
+            document.getElementById('msgModalText').innerText = tekst;
+            document.getElementById('msgModal').classList.remove('hidden');
+        }
+
+        window.apneBilValg = () => document.getElementById('bilModal').classList.remove('hidden');
+
+        window.lagreBilValg = function() {
+            const val = document.getElementById('bilIdInput').value;
+            if(!val) { alert("Vennligst velg en rute fra listen."); return; }
+            minBilId = val;
+            localStorage.setItem('hdist_rute_id', minBilId);
+            document.getElementById('headerTittel').innerText = minBilId.toUpperCase();
+            document.getElementById('bilModal').classList.add('hidden');
+            startRuteLytter();
+        }
+
+        async function initFirebase() {
+            try {
+                if(!window.firebaseModules) { setTimeout(initFirebase, 200); return; }
+                const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.firebaseModules;
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                document.getElementById('cloudStatus').innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i> <span class="text-green-400">Tilkoblet</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                if (minBilId) startRuteLytter();
+            } catch(e) { console.error(e); }
+        }
+
+        function startRuteLytter() {
+            if (!db || !minBilId) return;
+            const { collection, onSnapshot } = window.firebaseModules;
+            const collRef = collection(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev');
+            if (ruteLytter) ruteLytter(); 
+
+            ruteLytter = onSnapshot(collRef, (snapshot) => {
+                const mineOppdrag = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.assignedTo === minBilId && !data.signature && !data.photoProof) {
+                        mineOppdrag.push({ _id: doc.id, ...data });
+                    }
+                });
+                tegnRuteListe(mineOppdrag);
+            });
+        }
+
+        function tegnRuteListe(oppdrag) {
+            const liste = document.getElementById('ruteListe');
+            document.getElementById('ruteTeller').innerText = oppdrag.length;
+            
+            if (oppdrag.length === 0) {
+                liste.innerHTML = `<div class="text-center p-8 text-slate-500 text-sm flex flex-col items-center gap-2 mt-10"><i data-lucide="coffee" class="w-10 h-10 text-slate-600"></i>Ingen ubehandlede oppdrag på rute ${minBilId}.</div>`;
+                if (typeof lucide !== 'undefined') lucide.createIcons(); return;
+            }
+
+            liste.innerHTML = '';
+            oppdrag.forEach(ordre => {
+                const statusTekst = ordre.status || "Ubehandlet";
+                const ikonClass = statusTekst === 'På bil' ? 'text-blue-400 bg-blue-900/50' : (statusTekst === 'På terminal' ? 'text-yellow-400 bg-yellow-900/50' : 'text-slate-400 bg-slate-800');
+                const ikonType = statusTekst === 'På bil' ? 'truck' : (statusTekst === 'På terminal' ? 'building' : 'package');
+
+                const div = document.createElement('div');
+                div.className = "bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center justify-between active:scale-[0.98] transition-transform cursor-pointer hover:bg-slate-700";
+                div.onclick = () => visLeveringPåSkjerm(ordre);
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="${ikonClass} p-2 rounded-lg shrink-0"><i data-lucide="${ikonType}" class="w-6 h-6"></i></div>
+                        <div class="truncate">
+                            <h4 class="text-white font-bold truncate">${ordre.mottaker?.navn || 'Ukjent'}</h4>
+                            <p class="text-slate-400 text-xs truncate">${ordre.mottaker?.sted || ''}</p>
+                            <p class="text-slate-500 text-[10px] font-black tracking-widest mt-1">${statusTekst.toUpperCase()}</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 shrink-0"></i>
+                `;
+                liste.appendChild(div);
+            });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.avbrytLevering = () => {
+            gjeldendeOrdreId = null;
+            document.getElementById('leveringsskjerm').classList.add('hidden');
+            document.getElementById('hovedskjerm').classList.remove('hidden');
+        }
+
+        function visLeveringPåSkjerm(data) {
+            gjeldendeOrdreId = data._id;
+            
+            document.getElementById('infoSendingsnrTop').innerText = data.sendingsnummer || data._id;
+            
+            let statIcon = "package", statColor = "text-slate-400";
+            if(data.status === 'På bil') { statIcon = "truck"; statColor = "text-blue-400"; }
+            if(data.status === 'På terminal') { statIcon = "building"; statColor = "text-yellow-400"; }
+            
+            document.getElementById('infoStatus').innerHTML = `<i data-lucide="${statIcon}" class="w-4 h-4 ${statColor}"></i> ${data.status || 'Ubehandlet'}`;
+            document.getElementById('infoMottakerNavn').innerText = data.mottaker?.navn || 'Ukjent';
+            document.getElementById('infoMottakerAdresse').innerText = data.mottaker?.adresse || '';
+            document.getElementById('infoMottakerSted').innerText = `${data.mottaker?.postnr || ''} ${data.mottaker?.sted || ''}`;
+            document.getElementById('infoAvsenderNavn').innerText = data.avsender?.navn || 'Ukjent';
+            
+            let totalVekt = 0;
+            if (data.varer) { data.varer.forEach(v => { totalVekt += Number(v.vekt) || 0; }); }
+            document.getElementById('infoVekt').innerText = totalVekt.toFixed(1);
+
+            document.getElementById('hovedskjerm').classList.add('hidden');
+            document.getElementById('leveringsskjerm').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.oppdaterStatus = async function(nyStatus) {
+            if(!db || !gjeldendeOrdreId) return;
+            const { doc, updateDoc } = window.firebaseModules;
+            try {
+                const updateData = { status: nyStatus };
+                if (nyStatus === 'På bil') { updateData.assignedTo = minBilId; }
+                
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', gjeldendeOrdreId), updateData);
+                visMelding("Oppdatert ✅", `Status satt til: ${nyStatus}`);
+                avbrytLevering();
+            } catch(e) { visMelding("Feil", e.message); }
+        }
+
+        // --- SIGNATUR OG FOTO ---
+        function setupSignaturePad() {
+            canvas = document.getElementById('signaturePad');
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio; canvas.height = canvas.offsetHeight * ratio;
+            ctx = canvas.getContext('2d'); ctx.scale(ratio, ratio);
+            ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.strokeStyle = '#f8fafc';
+            
+            const getPos = e => { const r = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; };
+            const start = e => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+            const draw = e => { if (!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+            const stop = () => { isDrawing = false; };
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); window.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); window.addEventListener('touchend', stop);
+        }
+
+        window.apneSignaturModal = () => { document.getElementById('signatureModal').classList.remove('hidden'); tomSignatur(); }
+        window.lukkSignatur = () => { document.getElementById('signatureModal').classList.add('hidden'); }
+        window.tomSignatur = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        window.lagreSignatur = async function() {
+            const blank = document.createElement('canvas'); blank.width = canvas.width; blank.height = canvas.height;
+            if (canvas.toDataURL() === blank.toDataURL()) { alert("Vennligst signer først."); return; }
+            const b64 = canvas.toDataURL("image/png");
+            sendLeveringTilSky({ signature: b64, status: 'Levert', signertTidspunkt: Date.now() }, 'btnGodkjennSignatur', 'LAGRE SIGNATUR');
+        }
+
+        window.handterBilde = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const btn = document.getElementById('btnTaBilde');
+            const origHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Komprimerer bilde...';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const base64Photo = canvas.toDataURL('image/jpeg', 0.6); 
+                    
+                    sendLeveringTilSky({ photoProof: base64Photo, status: 'Levert', signertTidspunkt: Date.now() }, 'btnTaBilde', origHTML);
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function sendLeveringTilSky(updateData, btnId, origHtml) {
+            if (!db || !gjeldendeOrdreId) return;
+            const btn = document.getElementById(btnId);
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Henter GPS & Lagrer...';
+            btn.disabled = true;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            const utforLagring = async () => {
+                try {
+                    const { doc, updateDoc } = window.firebaseModules;
+                    await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', gjeldendeOrdreId), updateData);
+                    lukkSignatur(); avbrytLevering();
+                    visMelding("Gods Levert! ✅", "Dokumentasjon er sendt til kontoret.");
+                } catch (e) { visMelding("Feil", "Kunne ikke lagre: " + e.message); } 
+                finally { btn.innerHTML = origHtml; btn.disabled = false; if (typeof lucide !== 'undefined') lucide.createIcons();}
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (p) => { updateData.gps = { lat: p.coords.latitude, lng: p.coords.longitude }; utforLagring(); },
+                    (e) => { utforLagring(); }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            } else { utforLagring(); }
+        }
+
+        // --- SKANNER ---
+        let html5QrcodeScanner = null;
+        window.startScanner = function() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            if (html5QrcodeScanner) { html5QrcodeScanner.clear(); }
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, onScanSuccess).catch(e => { lukkScanner(); alert("Kamerafeil"); });
+        }
+        window.lukkScanner = function() { if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(e=>{}); document.getElementById('scannerModal').classList.add('hidden'); }
+
+        async function onScanSuccess(decodedText) {
+            lukkScanner();
+            if (!db) return;
+            const nrMatch = decodedText.match(/\b\d{8}\b/);
+            const idOppslag = nrMatch ? nrMatch[0] : decodedText;
+            
+            try {
+                const { doc, getDoc } = window.firebaseModules;
+                const docSnap = await getDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', idOppslag));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.signature || data.photoProof) { visMelding("Allerede levert", "Dette fraktbrevet er ferdig levert og arkivert."); return; }
+                    visLeveringPåSkjerm({_id: docSnap.id, ...data});
+                } else { visMelding("Ikke funnet i skyen", `Fant ikke pakke med nummer ${idOppslag}. Opprett fraktbrevet først.`); }
+            } catch(e) { visMelding("Feil", e.message); }
+        }
+    </script>
+</body>
+</html>

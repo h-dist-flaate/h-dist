@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helgeland Dist - Flåtesentral</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        window.firebaseModules = { initializeApp, getFirestore, collection, onSnapshot, doc, updateDoc, getAuth, signInAnonymously };
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        #map { height: 100%; min-height: 400px; width: 100%; border-radius: 0.75rem; z-index: 1; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg shadow-blue-900/50 shadow-lg">
+                <i data-lucide="satellite" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Sporing</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="connectionStatus" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-sm font-medium border border-slate-700">
+                <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div><span class="text-slate-300">Kobler til skyen...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
+        
+        <!-- Venstre kolonne -->
+        <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
+            <div class="grid grid-cols-2 gap-4 shrink-0">
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-xl flex flex-col justify-center">
+                    <div class="flex justify-between items-start mb-2"><span class="text-slate-400 text-sm font-semibold">I Rute/Terminal</span><i data-lucide="truck" class="w-5 h-5 text-blue-400"></i></div>
+                    <span id="statAktive" class="text-4xl font-black text-white">0</span>
+                </div>
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-xl flex flex-col justify-center relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="check-circle" class="w-24 h-24 text-green-500"></i></div>
+                    <div class="flex justify-between items-start mb-2 relative z-10"><span class="text-slate-400 text-sm font-semibold">Levert i dag</span><i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i></div>
+                    <span id="statLevert" class="text-4xl font-black text-green-400 relative z-10">0</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl flex flex-col flex-1 overflow-hidden">
+                <div class="p-3 border-b border-slate-700 bg-slate-900/50 flex justify-between items-center shrink-0">
+                    <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm uppercase"><i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Ordreoversikt</h2>
+                    <input type="text" id="sokeFelt" onkeyup="filtrerListe()" placeholder="Søk ordrenr/navn..." class="bg-slate-950 border border-slate-700 text-sm text-white px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 w-40 transition-all">
+                </div>
+                <div id="ordreListe" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+                    <div class="text-center p-8 text-slate-500 text-sm"><i data-lucide="loader" class="w-6 h-6 animate-spin mx-auto mb-2"></i>Henter live-data...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Høyre kolonne: Kart -->
+        <div class="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 shadow-xl flex flex-col overflow-hidden relative">
+            <div class="flex-1 w-full bg-slate-900 relative"><div id="map"></div></div>
+        </div>
+    </main>
+
+    <!-- Tildel Rute Modal -->
+    <div id="tildelModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-black text-white flex items-center gap-2"><i data-lucide="map" class="text-blue-400"></i> Tildel Rute</h3>
+                <button onclick="lukkTildelModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-slate-400 mb-2 text-sm">Send ordre <strong id="tildelOrdreNr" class="text-white"></strong> til rute:</p>
+            
+            <select id="tildelInput" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 mb-6 font-bold">
+                <option value="">-- Ingen rute --</option>
+                <option value="Nesna">1. Nesna</option>
+                <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
+                <option value="Lovund">3. Lovund</option>
+                <option value="Mo">4. Mo</option>
+                <option value="Sandnessjøen">5. Sandnessjøen</option>
+                <option value="Mosjøen">6. Mosjøen</option>
+            </select>
+            
+            <div class="flex gap-2">
+                <button onclick="fjernTildeling()" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Fjern</button>
+                <button onclick="lagreTildeling()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-500 flex-1">Lagre & Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vis Bilde Modal -->
+    <div id="bildeModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-4 w-full max-w-lg border border-slate-700 relative">
+            <button onclick="document.getElementById('bildeModal').classList.add('hidden')" class="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="text-white font-bold mb-2">Fotobevis (Levert uten signatur)</h3>
+            <img id="visningBilde" src="" class="w-full rounded-lg border border-slate-600">
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
+        const configAppId = "fraktbrev-h-dist";
+
+        let db, auth, map, markersLayer, alleFraktbrev = [];
+        let valgtTildelId = null;
+
+        document.addEventListener('DOMContentLoaded', () => { initMap(); initFirebase(); });
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([66.2, 13.5], 8);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM', maxZoom: 19 }).addTo(map);
+            markersLayer = L.layerGroup().addTo(map);
+        }
+
+        async function initFirebase() {
+            try {
+                if(!window.firebaseModules) { setTimeout(initFirebase, 200); return; }
+                const { initializeApp, getFirestore, getAuth, signInAnonymously, collection, onSnapshot } = window.firebaseModules;
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app); auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                document.getElementById('connectionStatus').innerHTML = `<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></div><span class="text-green-400 font-bold">Live Data</span>`;
+
+                onSnapshot(collection(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev'), (snapshot) => {
+                    alleFraktbrev = [];
+                    snapshot.forEach(doc => alleFraktbrev.push({ _id: doc.id, ...doc.data() }));
+                    alleFraktbrev.sort((a, b) => (b.lagretTidspunkt || 0) - (a.lagretTidspunkt || 0));
+                    oppdaterSkjerm(alleFraktbrev);
+                });
+            } catch(e) { document.getElementById('connectionStatus').innerHTML = `<span class="text-red-500">Koblefeil</span>`; }
+        }
+
+        function oppdaterSkjerm(dataListe) {
+            const listeContainer = document.getElementById('ordreListe');
+            listeContainer.innerHTML = '';
+            markersLayer.clearLayers();
+
+            let aktiveCount = 0, levertCount = 0;
+            const iDagMidnatt = new Date(); iDagMidnatt.setHours(0,0,0,0);
+
+            dataListe.forEach(ordre => {
+                const erLevert = !!ordre.signature || !!ordre.photoProof;
+                const harGPS = !!ordre.gps;
+                
+                if (erLevert) { if (ordre.signertTidspunkt && ordre.signertTidspunkt > iDagMidnatt.getTime()) levertCount++; } 
+                else { aktiveCount++; }
+
+                // Visuell Status (Ikon & Farge)
+                let ikon = "package", farge = "text-slate-400", bg = "bg-slate-700";
+                if (erLevert) { ikon = ordre.photoProof ? "camera" : "check-circle"; farge = "text-green-400"; bg = "bg-green-900/20 opacity-60 border-green-900"; }
+                else if (ordre.status === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
+                else if (ordre.status === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
+                
+                // Rute-knapp
+                let tildelBadge = '';
+                if (!erLevert) {
+                    if (ordre.assignedTo) {
+                        tildelBadge = `<button onclick="apneTildelModal('${ordre._id}', '${ordre.assignedTo}')" class="text-[10px] bg-blue-600/30 text-blue-300 hover:bg-blue-600 hover:text-white px-2 py-0.5 rounded border border-blue-500/50 mt-1 uppercase font-bold tracking-wider transition-colors"><i data-lucide="map" class="w-3 h-3 inline mr-1"></i>Rute: ${ordre.assignedTo}</button>`;
+                    } else {
+                        tildelBadge = `<button onclick="apneTildelModal('${ordre._id}', '')" class="text-[10px] bg-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white px-2 py-0.5 rounded border border-slate-600 mt-1 uppercase font-bold transition-colors">Tildel Rute +</button>`;
+                    }
+                }
+
+                let bildeKnapp = '';
+                if(ordre.photoProof) { bildeKnapp = `<button onclick="visBilde('${ordre.photoProof}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-purple-400 mr-1"><i data-lucide="image" class="w-4 h-4"></i></button>`; }
+
+                const element = document.createElement('div');
+                element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
+                element.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
+                        <div>
+                            <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] text-slate-400 font-normal ml-1">${ordre.status || 'Registrert'}</span></div>
+                            <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
+                            ${tildelBadge}
+                        </div>
+                    </div>
+                    <div class="text-right flex items-end">
+                        ${bildeKnapp}
+                        ${harGPS && erLevert ? `<button onclick="map.setView([${ordre.gps.lat}, ${ordre.gps.lng}], 15)" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : ''}
+                    </div>
+                `;
+                listeContainer.appendChild(element);
+
+                if (harGPS && erLevert) {
+                    const typeIkon = ordre.photoProof ? '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>' : '<path d="M20 6 9 17l-5-5"/>';
+                    const customIcon = L.divIcon({ className: 'custom-pin', html: `<div class="w-6 h-6 bg-green-500 border-2 border-white rounded-full shadow-lg flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${typeIkon}</svg></div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
+                    const popup = `<div class="text-slate-800 font-sans p-1 min-w-[150px]"><div class="font-bold border-b pb-1 mb-1">${ordre.sendingsnummer}</div><div class="text-sm"><b>Mottaker:</b> ${ordre.mottaker?.navn || ''}</div><div class="mt-1 text-xs text-green-600 font-bold flex items-center gap-1">✅ Levert (${ordre.photoProof ? 'Bilde' : 'Signatur'})</div></div>`;
+                    L.marker([ordre.gps.lat, ordre.gps.lng], { icon: customIcon }).bindPopup(popup).addTo(markersLayer);
+                }
+            });
+
+            document.getElementById('statAktive').innerText = aktiveCount;
+            document.getElementById('statLevert').innerText = levertCount;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.visBilde = function(b64) {
+            document.getElementById('visningBilde').src = b64;
+            document.getElementById('bildeModal').classList.remove('hidden');
+        }
+
+        window.filtrerListe = function() {
+            const sokFelt = document.getElementById('sokeFelt').value.toLowerCase();
+            oppdaterSkjerm(alleFraktbrev.filter(o => (`${o.sendingsnummer||''} ${o.mottaker?.navn||''} ${o.assignedTo||''} ${o.status||''}`.toLowerCase()).includes(sokFelt)));
+        }
+
+        window.apneTildelModal = function(id, currentAssigned) {
+            valgtTildelId = id;
+            document.getElementById('tildelOrdreNr').innerText = id;
+            document.getElementById('tildelInput').value = currentAssigned || '';
+            document.getElementById('tildelModal').classList.remove('hidden');
+        }
+        window.lukkTildelModal = () => document.getElementById('tildelModal').classList.add('hidden');
+
+        window.lagreTildeling = async function() {
+            if(!db || !valgtTildelId) return;
+            const ruteInput = document.getElementById('tildelInput').value;
+            const { doc, updateDoc } = window.firebaseModules;
+            try { await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: ruteInput }); lukkTildelModal(); } 
+            catch (e) { alert(e.message); }
+        }
+        window.fjernTildeling = async function() {
+            if(!db || !valgtTildelId) return;
+            const { doc, updateDoc } = window.firebaseModules;
+            try { await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: null }); lukkTildelModal(); } 
+            catch (e) { alert(e.message); }
+        }
+    </script>
+</body>
+</html>
