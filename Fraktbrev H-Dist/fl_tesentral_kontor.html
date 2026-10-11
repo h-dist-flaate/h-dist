@@ -24,7 +24,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-        .sig-bilde { background-color: white; padding: 4px; border-radius: 8px; }
+        .sig-bilde { padding: 4px; border-radius: 8px; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -569,7 +569,15 @@
             document.getElementById('visningBilde').src = b64;
             document.getElementById('bildeModalTittel').innerText = isPhoto ? "Fotobevis for levering" : "Kundens Signatur";
             document.getElementById('bildeModalTekst').innerText = isPhoto ? "Sjåfør valgte levering uten signatur." : "Signert for mottak på mobil.";
-            if(!isPhoto) { document.getElementById('visningBilde').classList.add('bg-white'); } else { document.getElementById('visningBilde').classList.remove('bg-white'); }
+            
+            // Hvis det er en signatur, legger vi til grå bakgrunn så hvite streker vises!
+            if(!isPhoto) { 
+                document.getElementById('visningBilde').classList.add('bg-slate-500'); 
+                document.getElementById('visningBilde').classList.remove('bg-white'); 
+            } else { 
+                document.getElementById('visningBilde').classList.remove('bg-white', 'bg-slate-500'); 
+            }
+            
             document.getElementById('bildeModal').classList.remove('hidden');
         }
 
