@@ -108,6 +108,7 @@
         </button>
     </main>
 
+    <!-- Rutevalg Modal -->
     <div id="bilModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[120] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
             <h3 class="text-xl font-black mb-2 text-white flex items-center gap-2"><i data-lucide="map" class="text-blue-400"></i> Hvilken rute?</h3>
@@ -125,6 +126,7 @@
         </div>
     </div>
 
+    <!-- Scanner Modal -->
     <div id="scannerModal" class="hidden fixed inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-[90] p-4 backdrop-blur-sm">
         <div class="w-full max-w-lg bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700">
             <button type="button" onclick="lukkScanner()" class="absolute top-4 right-4 bg-slate-800 hover:bg-red-500 text-white rounded-full p-2 z-10 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -136,12 +138,13 @@
         </div>
     </div>
 
+    <!-- Signatur Modal -->
     <div id="signatureModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md flex flex-col border border-slate-700">
             <h3 class="text-xl font-bold mb-1 text-white">Kundens Signatur</h3>
             <p class="text-slate-400 text-xs mb-3">La kunden signere for mottak i feltet under.</p>
             <div class="relative mb-4 bg-slate-900 rounded-xl">
-                <canvas id="signaturePad" width="380" height="200" class="w-full h-[200px]"></canvas>
+                <canvas id="signaturePad" class="w-full h-[200px]"></canvas>
             </div>
             
             <div class="flex gap-2 justify-end mb-4">
@@ -167,6 +170,7 @@
         </div>
     </div>
 
+    <!-- Meldingsboks -->
     <div id="msgModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[130] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-slate-700">
             <h3 id="msgModalTitle" class="text-xl font-black mb-2 text-white mt-4"></h3>
@@ -185,7 +189,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
-            setupSignaturePad();
+            setupSignaturePadEvents(); // Legger bare til klikk-lyttere i starten
             initFirebase();
             
             minBilId = localStorage.getItem('hdist_rute_id') || "";
@@ -288,13 +292,10 @@
 
         function visLeveringPåSkjerm(data) {
             gjeldendeOrdreId = data._id;
-            
             document.getElementById('infoSendingsnrTop').innerText = data.sendingsnummer || data._id;
-            
             let statIcon = "package", statColor = "text-slate-400";
             if(data.status === 'På bil') { statIcon = "truck"; statColor = "text-blue-400"; }
             if(data.status === 'På terminal') { statIcon = "building"; statColor = "text-yellow-400"; }
-            
             document.getElementById('infoStatus').innerHTML = `<i data-lucide="${statIcon}" class="w-4 h-4 ${statColor}"></i> ${data.status || 'Ubehandlet'}`;
             document.getElementById('infoMottakerNavn').innerText = data.mottaker?.navn || 'Ukjent';
             document.getElementById('infoMottakerAdresse').innerText = data.mottaker?.adresse || '';
@@ -324,22 +325,38 @@
         }
 
         // --- SIGNATUR OG FOTO ---
-        function setupSignaturePad() {
+        function setupSignaturePadEvents() {
             canvas = document.getElementById('signaturePad');
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio; canvas.height = canvas.offsetHeight * ratio;
-            ctx = canvas.getContext('2d'); ctx.scale(ratio, ratio);
-            ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.strokeStyle = '#f8fafc';
+            ctx = canvas.getContext('2d');
             
-            const getPos = e => { const r = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; };
+            const getPos = e => { 
+                const r = canvas.getBoundingClientRect(); 
+                return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; 
+            };
             const start = e => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); };
             const draw = e => { if (!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
             const stop = () => { isDrawing = false; };
+            
             canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); window.addEventListener('mouseup', stop);
             canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); window.addEventListener('touchend', stop);
         }
 
-        window.apneSignaturModal = () => { document.getElementById('signatureModal').classList.remove('hidden'); tomSignatur(); }
+        window.apneSignaturModal = () => { 
+            const modal = document.getElementById('signatureModal');
+            modal.classList.remove('hidden'); 
+            
+            // SUPERVIKTIG FIX FOR MOBIL: Oppdater størrelsen NÅR modalen er synlig, ikke før!
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio; 
+            canvas.height = canvas.offsetHeight * ratio;
+            ctx.scale(ratio, ratio);
+            ctx.lineWidth = 4; 
+            ctx.lineCap = 'round'; 
+            ctx.strokeStyle = '#f8fafc';
+            
+            tomSignatur(); 
+        }
+        
         window.lukkSignatur = () => { document.getElementById('signatureModal').classList.add('hidden'); }
         window.tomSignatur = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
@@ -432,3 +449,12 @@
     </script>
 </body>
 </html>
+```
+
+### Slik oppdaterer du filen kjapt (Akkurat som i stad):
+1. Gå inn i GitHub-mappen din.
+2. Åpne filen `sj_f_r_terminal.html` (viktig at det er akkurat denne).
+3. Trykk på **Blyanten** oppe til høyre.
+4. Slett den gamle koden, lim inn denne nye, og trykk **Commit changes**.
+
+Når du har gjort dette, oppdaterer du bare nettsiden på mobilen din. Prøv å åpne signaturboksen igjen, så lover jeg at tusjen fungerer! Si ifra om det gjorde susen.
