@@ -9,6 +9,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Strekkode-motor for utskrift -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -24,11 +26,27 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-        .sig-bilde { padding: 4px; border-radius: 8px; }
+        .sig-bilde { background-color: #f8fafc; padding: 4px; border-radius: 8px; }
+
+        /* Utskrifts-stiler (Skjult på vanlig skjerm) */
+        #utskriftsVisning { display: none; }
+        .a4-ark { background-color: white; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 15mm; color: black; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
+        .clean-box { border: 1px solid black; padding: 2mm; box-sizing: border-box; }
+        .box-title { font-size: 8pt; font-weight: bold; margin-bottom: 2mm; display: block; text-transform: uppercase; }
+        .box-content { font-size: 10pt; line-height: 1.3; }
+
+        @media print {
+            @page { margin: 0; size: A4 portrait; }
+            body, html { margin: 0 !important; padding: 0 !important; height: 100% !important; width: 100% !important; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: black !important; }
+            body.print-mode-a4 > * { display: none !important; }
+            body.print-mode-a4 #utskriftsVisning { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+            .a4-ark { width: 210mm !important; height: 297mm !important; position: absolute !important; top: 0 !important; left: 0 !important; }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
+    <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 p-2 rounded-lg shadow-blue-900/50 shadow-lg">
@@ -36,7 +54,8 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded ml-1 text-[10px] font-black">v1.5</span></p>
+                <!-- VERSJON: Endret til v1.7 -->
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v1.7</span></p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -46,6 +65,7 @@
         </div>
     </header>
 
+    <!-- Fane-navigasjon -->
     <nav class="bg-slate-800 border-b border-slate-700 px-4 py-2 flex gap-2 shrink-0 overflow-x-auto custom-scrollbar shadow-md z-10 relative">
         <button id="tab-live" onclick="byttFane('live')" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-colors whitespace-nowrap">
             <i data-lucide="map" class="w-4 h-4"></i> Live Kart
@@ -58,6 +78,7 @@
         </button>
     </nav>
 
+    <!-- VIEW: LIVE KART -->
     <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
@@ -87,6 +108,7 @@
         </div>
     </main>
 
+    <!-- VIEW: TIL FAKTURERING -->
     <main id="view-faktura" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -113,6 +135,7 @@
         </div>
     </main>
 
+    <!-- VIEW: FERDIG FAKTURERT -->
     <main id="view-ferdig" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -138,6 +161,7 @@
         </div>
     </main>
 
+    <!-- Tildel Rute Modal -->
     <div id="tildelModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
             <div class="flex justify-between items-center mb-4">
@@ -161,6 +185,7 @@
         </div>
     </div>
 
+    <!-- Vis Signatur/Bilde Modal -->
     <div id="bildeModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-4 w-full max-w-lg border border-slate-700 relative flex flex-col items-center">
             <button onclick="document.getElementById('bildeModal').classList.add('hidden')" class="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg z-10"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -172,6 +197,7 @@
         </div>
     </div>
 
+    <!-- Historikk / Sporings Modal -->
     <div id="historikkModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[140] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-700 relative flex flex-col max-h-[85vh]">
             <button onclick="document.getElementById('historikkModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -181,11 +207,13 @@
         </div>
     </div>
 
+    <!-- Fraktbrev Detaljer Modal (NÅ MED UTSKRIFTSKNAPP) -->
     <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
-            <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center shrink-0">
+            <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center shrink-0 pr-12">
                 <h3 class="text-xl font-black text-white flex items-center gap-2"><i data-lucide="file-text" class="text-blue-400"></i> Fraktbrev: <span id="fbModalOrdrenr" class="text-white"></span></h3>
+                <button onclick="skrivUtÅpnetFraktbrev()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-md transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Skriv ut (A4)</button>
             </div>
             <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
                 
@@ -226,6 +254,121 @@
         </div>
     </div>
 
+    <!-- UTKSRIFTSVISNING A4 (KUN SYNLIG NÅR DU TRYKKER PÅ SKRIV UT) -->
+    <div id="utskriftsVisning">
+        <div class="a4-ark mx-auto">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
+                <div style="width: 50%;">
+                    <div style="display: flex; align-items: center; gap: 4mm; margin-bottom: 3mm;">
+                        <!-- Henter logo -->
+                        <img src="../thumbnail_image001.png" style="max-height: 18mm; max-width: 45mm; object-fit: contain;" alt="Logo" onerror="this.style.display='none'">
+                        <div>
+                            <h1 style="font-size: 22pt; font-weight: 900; letter-spacing: 1px; margin: 0; line-height: 1;">FRAKTBREV</h1>
+                            <div style="font-size: 8pt; color: #444;">Waybill / Consignment Note</div>
+                        </div>
+                    </div>
+                    <div style="height: 15mm; display: flex; justify-content: flex-start;">
+                        <svg id="printStrekkode" style="height: 100%; display: none;"></svg>
+                    </div>
+                </div>
+                
+                <div style="width: 40%; display: flex; gap: 2mm;">
+                    <div class="clean-box" style="flex: 1; border-right: none;">
+                        <span class="box-title">Ordrenr:</span>
+                        <div id="printOrdrenr" class="box-content" style="font-size: 11pt; font-weight:bold;"></div>
+                    </div>
+                    <div class="clean-box" style="width: 25mm;">
+                        <span class="box-title">Dato:</span>
+                        <div id="printDato" class="box-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 2mm; margin-bottom: 2mm;">
+                <div class="clean-box" style="width: 50%; min-height: 35mm;">
+                    <span class="box-title">1. AVSENDER (SENDER)</span>
+                    <div id="printAvsender" class="box-content" style="font-weight:bold;"></div>
+                    <div id="printAvsenderRef" style="font-size: 9pt; margin-top: 3mm;"></div>
+                </div>
+                <div class="clean-box" style="width: 50%; min-height: 35mm;">
+                    <span class="box-title">2. MOTTAKER (CONSIGNEE)</span>
+                    <div id="printMottaker" class="box-content" style="font-weight:bold; font-size:11pt;"></div>
+                    <div id="printMottakerRef" style="font-size: 9pt; margin-top: 3mm; font-weight:bold;"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 2mm; margin-bottom: 2mm;">
+                <div class="clean-box" style="width: 40%; min-height: 15mm; display: flex; flex-direction: column;">
+                    <span class="box-title">3. TRANSPORTØR (CARRIER)</span>
+                    <div id="printTransportor" class="box-content" style="margin-top: auto; padding-bottom: 1mm; font-weight:bold;"></div>
+                </div>
+                <div class="clean-box" style="width: 25%;">
+                    <span class="box-title">4. LEVERINGSBETINGELSER (INCOTERMS)</span>
+                    <div id="printIncoterms" class="box-content"></div>
+                </div>
+                <div class="clean-box" style="width: 35%;">
+                    <span class="box-title">5. FRAKTBETALER (FREIGHT PAYER)</span>
+                    <div style="display: flex; gap: 4mm; margin-top: 1mm;">
+                        <div style="display: flex; align-items: center; gap: 1mm;"><div style="width: 4mm; height: 4mm; border: 1px solid black; text-align: center; font-size: 8pt; font-weight: bold; line-height: 4mm;" id="boxSenderBetaler"></div><span style="font-size: 9pt;">Avsender</span></div>
+                        <div style="display: flex; align-items: center; gap: 1mm;"><div style="width: 4mm; height: 4mm; border: 1px solid black; text-align: center; font-size: 8pt; font-weight: bold; line-height: 4mm;" id="boxMottakerBetaler"></div><span style="font-size: 9pt;">Mottaker</span></div>
+                    </div>
+                    <div id="boxAnnenBetaler" style="font-size: 9pt; font-weight: bold; margin-top: 2mm;"></div>
+                </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid black; padding: 2mm; font-size: 7.5pt; text-align: left; width: 10%;">MERK</th>
+                        <th style="border: 1px solid black; padding: 2mm; font-size: 7.5pt; text-align: center; width: 10%;">ANTALL</th>
+                        <th style="border: 1px solid black; padding: 2mm; font-size: 7.5pt; text-align: center; width: 15%;">EMBALLASJE</th>
+                        <th style="border: 1px solid black; padding: 2mm; font-size: 7.5pt; text-align: left; width: 45%;">VAREBESKRIVELSE / GODSTYPE</th>
+                        <th style="border: 1px solid black; padding: 2mm; font-size: 7.5pt; text-align: center; width: 10%;">VEKT (KG)</th>
+                        <th style="border: 1px solid black; padding: 2mm; font-size: 7.5pt; text-align: center; width: 10%;">VOLUM (M³)</th>
+                    </tr>
+                </thead>
+                <tbody id="printVarelinjer" style="min-height: 40mm;"></tbody>
+                <tfoot>
+                    <tr>
+                        <td style="border: 1px solid black; padding: 2mm;"></td>
+                        <td id="printTotalAntall" style="border: 1px solid black; padding: 2mm; text-align: center; font-weight: bold; font-size: 10pt;"></td>
+                        <td style="border: 1px solid black; padding: 2mm;"></td>
+                        <td style="border: 1px solid black; padding: 2mm; text-align: right; font-weight: bold; font-size: 9pt;">TOTAL:</td>
+                        <td id="printTotalVekt" style="border: 1px solid black; padding: 2mm; text-align: center; font-weight: bold; font-size: 10pt;"></td>
+                        <td id="printTotalVolum" style="border: 1px solid black; padding: 2mm; text-align: center; font-weight: bold; font-size: 10pt;"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="clean-box" style="min-height: 25mm; margin-bottom: auto;">
+                <span class="box-title">SPESIELLE INSTRUKSJONER (SPECIAL INSTRUCTIONS)</span>
+                <div id="printInstrukser" style="font-size: 10pt; white-space: pre-wrap;"></div>
+            </div>
+
+            <div style="display: flex; gap: 2mm; padding-top: 5mm; margin-top: 10mm; border-top: 1px solid #ccc; page-break-inside: avoid;">
+                <div style="width: 33%; display: flex; flex-direction: column;">
+                    <div style="border-top: 1px solid black; padding-top: 1mm; margin-top: auto;">
+                        <div style="font-size: 8pt; font-weight: bold;">Gods utlevert / Signatur avsender</div>
+                    </div>
+                </div>
+                <div style="width: 33%; display: flex; flex-direction: column;">
+                    <div style="border-top: 1px solid black; padding-top: 1mm; margin-top: auto;">
+                        <div style="font-size: 8pt; font-weight: bold;">Mottatt av Transportør</div>
+                    </div>
+                </div>
+                <div style="width: 34%; display: flex; flex-direction: column; position: relative;">
+                    <div style="height: 15mm; display: flex; align-items: flex-end; justify-content: flex-start; margin-bottom: 1mm;">
+                        <img id="printSignatureImage" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;">
+                    </div>
+                    <div style="border-top: 1px solid black; padding-top: 1mm;">
+                        <div style="font-size: 8pt; font-weight: bold;">Signatur mottaker / Fotobevis</div>
+                        <div id="printGpsData" style="font-size: 7pt; color: #333; margin-top: 1mm; font-weight: bold;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -233,6 +376,7 @@
         let db, auth, map, markersLayer, alleFraktbrev = [];
         let valgtTildelId = null;
         let aktivFane = 'live';
+        let aktivtFraktbrevForUtskrift = null; // Lagrer det åpne fraktbrevet
 
         document.addEventListener('DOMContentLoaded', () => { initMap(); initFirebase(); });
 
@@ -307,7 +451,6 @@
             const iDagMidnatt = new Date(); iDagMidnatt.setHours(0,0,0,0);
 
             dataListe.forEach(ordre => {
-                // NY LOGIKK: Hvis ordren er ferdig fakturert, skjules den helt fra Live-skjermen!
                 if (ordre.fakturert === true) return;
 
                 const erLevert = !!ordre.signature || !!ordre.photoProof;
@@ -340,7 +483,7 @@
                     if(dok) { 
                         bildeKnapp = `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-purple-400 mr-1 shadow-sm" title="Se Signatur/Bilde"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>`; 
                     }
-                    const kartKnapp = harGPS && erLevert ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm" title="Vis på kart"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : '';
+                    const kartKnapp = harGPS ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm" title="Vis på kart"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : '';
 
                     const element = document.createElement('div');
                     element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
@@ -363,11 +506,17 @@
                     listeContainer.appendChild(element);
                 }
 
-                if (harGPS && erLevert) {
-                    const typeIkon = ordre.photoProof ? '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>' : '<path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle>';
-                    const customIcon = L.divIcon({ className: 'custom-pin', html: `<div class="w-6 h-6 bg-green-500 border-2 border-white rounded-full shadow-lg flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${typeIkon}</svg></div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
-                    const popup = `<div class="text-slate-800 font-sans p-1 min-w-[150px]"><div class="font-bold border-b pb-1 mb-1">${ordre.sendingsnummer}</div><div class="text-sm"><b>Mottaker:</b> ${ordre.mottaker?.navn || ''}</div><div class="mt-1 text-xs text-green-600 font-bold flex items-center gap-1">✅ Levert (${ordre.photoProof ? 'Bilde' : 'Signatur'})</div></div>`;
-                    L.marker([ordre.gps.lat, ordre.gps.lng], { icon: customIcon }).bindPopup(popup).addTo(markersLayer);
+                if (harGPS) {
+                    let typeIkon = ''; let farge = '';
+                    if (erLevert) { typeIkon = ordre.photoProof ? '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>' : '<path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle>'; farge = 'bg-green-500'; }
+                    else if (ordre.status === 'På terminal') { typeIkon = '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path>'; farge = 'bg-yellow-500'; }
+                    else if (ordre.status === 'På bil') { typeIkon = '<path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><path d="M14 17h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle>'; farge = 'bg-blue-500'; }
+
+                    if (typeIkon) {
+                        const customIcon = L.divIcon({ className: 'custom-pin', html: `<div class="w-6 h-6 ${farge} border-2 border-white rounded-full shadow-lg flex items-center justify-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${typeIkon}</svg></div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
+                        const popup = `<div class="text-slate-800 font-sans p-1 min-w-[150px]"><div class="font-bold border-b pb-1 mb-1">${ordre.sendingsnummer}</div><div class="text-sm"><b>Mottaker:</b> ${ordre.mottaker?.navn || ''}</div><div class="mt-1 text-xs font-bold flex items-center gap-1">${ordre.status}</div></div>`;
+                        L.marker([ordre.gps.lat, ordre.gps.lng], { icon: customIcon }).bindPopup(popup).addTo(markersLayer);
+                    }
                 }
             });
 
@@ -429,6 +578,8 @@
         window.visFraktbrevDetaljer = function(id) {
             const ordre = alleFraktbrev.find(o => o._id === id);
             if(!ordre) return;
+            
+            aktivtFraktbrevForUtskrift = ordre; // Lagrer for utskrift
 
             document.getElementById('fbModalOrdrenr').innerText = ordre.sendingsnummer || id;
             
@@ -474,6 +625,83 @@
 
             document.getElementById('fraktbrevModal').classList.remove('hidden');
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // --- UTSKRIFTSFUNKSJON ---
+        window.skrivUtÅpnetFraktbrev = function() {
+            if(!aktivtFraktbrevForUtskrift) return;
+            const ordre = aktivtFraktbrevForUtskrift;
+
+            document.getElementById('printOrdrenr').innerText = ordre.sendingsnummer || ordre._id;
+            
+            const d = ordre.dato ? new Date(ordre.dato) : new Date(ordre.lagretTidspunkt || Date.now());
+            document.getElementById('printDato').innerText = !isNaN(d) ? `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}` : '-';
+
+            let avs = ordre.avsender || {};
+            document.getElementById('printAvsender').innerHTML = `${avs.navn||''}<br>${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}`;
+            document.getElementById('printAvsenderRef').innerText = avs.ref ? `Ref/Tlf: ${avs.ref}` : '';
+
+            let mot = ordre.mottaker || {};
+            document.getElementById('printMottaker').innerHTML = `${mot.navn||''}<br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}`;
+            document.getElementById('printMottakerRef').innerText = mot.ref ? `Ref/Tlf: ${mot.ref}` : '';
+
+            document.getElementById('printTransportor').innerText = ordre.transportor || 'Helgeland Distribusjon';
+            document.getElementById('printIncoterms').innerText = ordre.incoterms || '-';
+
+            document.getElementById('boxSenderBetaler').innerText = (ordre.betaler === 'Sender' || ordre.betaler === 'Avsender') ? 'X' : '';
+            document.getElementById('boxMottakerBetaler').innerText = ordre.betaler === 'Mottaker' ? 'X' : '';
+            document.getElementById('boxAnnenBetaler').innerText = (ordre.betaler && ordre.betaler !== 'Sender' && ordre.betaler !== 'Mottaker' && ordre.betaler !== 'Avsender') ? `Annen: ${ordre.betaler}` : '';
+
+            const tbody = document.getElementById('printVarelinjer');
+            tbody.innerHTML = '';
+            let totAntall = 0, totVekt = 0, totVolum = 0;
+
+            if (ordre.varer && ordre.varer.length > 0) {
+                ordre.varer.forEach(v => {
+                    totAntall += Number(v.antall) || 0; totVekt += Number(v.vekt) || 0; totVolum += Number(v.volum) || 0;
+                    tbody.innerHTML += `<tr>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.merk || ''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.antall || ''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.emballasje || ''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.art || ''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.vekt || ''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.volum || ''}</td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('printTotalAntall').innerText = totAntall || '-';
+            document.getElementById('printTotalVekt').innerText = totVekt ? totVekt.toFixed(1) : '-';
+            document.getElementById('printTotalVolum').innerText = totVolum ? totVolum.toFixed(2) : '-';
+
+            document.getElementById('printInstrukser').innerText = ordre.instrukser || '-';
+
+            // Signatur / Bilde
+            const sigImg = document.getElementById('printSignatureImage');
+            const gpsTekst = document.getElementById('printGpsData');
+            
+            if (ordre.signature || ordre.photoProof) { 
+                sigImg.src = ordre.signature || ordre.photoProof; 
+                sigImg.style.display = 'block'; 
+                if (ordre.gps) { gpsTekst.innerHTML = `Levert: ${ordre.photoProof ? 'Fotobevis' : 'Signert'} (GPS lagret)`; } 
+                else { gpsTekst.innerText = ordre.photoProof ? 'Fotobevis' : 'Signert elektronisk'; }
+            } else { sigImg.style.display = 'none'; gpsTekst.innerText = ''; }
+
+            // Generer strekkode og skriv ut
+            setTimeout(() => {
+                const barcodeSvg = document.getElementById('printStrekkode');
+                try { 
+                    JsBarcode(barcodeSvg, String(ordre.sendingsnummer || ordre._id), { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 }); 
+                    barcodeSvg.style.display = 'block'; 
+                } catch(e) { barcodeSvg.style.display = 'none'; }
+                
+                document.body.classList.add('print-mode-a4');
+                window.print();
+            }, 100);
+        }
+
+        // Fjern utskriftsmodus når vinduet lukkes
+        window.onafterprint = function() {
+            document.body.classList.remove('print-mode-a4');
         }
 
         window.visHistorikk = function(id) {
