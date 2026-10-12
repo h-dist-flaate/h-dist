@@ -47,16 +47,15 @@
 
     <div id="skjermVisning" class="no-print max-w-4xl mx-auto p-2 sm:p-8">
         
-        <!-- HEADER MED LOGO -->
         <div class="bg-slate-900 text-white rounded-xl p-6 shadow-xl flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 border border-slate-700">
             <div class="flex items-center gap-4">
-                <div class="bg-slate-800 p-2 rounded-xl shadow-lg border border-slate-700">
+                <div class="bg-blue-600 p-2 rounded-xl shadow-lg">
                     <img src="thumbnail_image001.png" alt="Firmalogo" class="w-14 h-14 object-contain bg-white rounded-lg shadow-sm p-1" onerror="this.outerHTML='<i data-lucide=\'package\' class=\'w-12 h-12 text-white\'></i>'">
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-wider text-white">FRAKTBREV</h1>
+                    <h1 class="text-2xl font-black tracking-wider text-white flex items-center gap-2">FRAKTBREV <span class="bg-blue-900 text-blue-400 border border-blue-700 px-2 py-0.5 rounded-lg text-xs tracking-widest">v1.4</span></h1>
                     <p class="text-slate-400 mt-1 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
-                        Opprett og skann <span id="cloudStatus" class="inline-flex items-center gap-1 text-yellow-500 ml-2"><i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Kobler til...</span>
+                        Opprett og skann <span id="cloudStatus" class="inline-flex items-center gap-1 text-yellow-500 ml-2"><i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Skyen</span>
                     </p>
                 </div>
             </div>
@@ -355,7 +354,7 @@
         </div>
     </div>
 
-    <!-- ETIKETTVISNING (10x19cm) -->
+    <!-- ETIKETTVISNING -->
     <div id="etikettVisning" class="relative flex-col items-center">
         <div class="no-print w-full max-w-[102mm] flex justify-between gap-4 z-10 mb-6">
             <button onclick="lukkEtikett()" class="bg-slate-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-600 shadow-lg flex items-center gap-2">← Tilbake</button>
@@ -393,7 +392,7 @@
         </div>
     </div>
 
-    <!-- Live Scanner Modal -->
+    <!-- Scanner Modal -->
     <div id="scannerModal" class="hidden fixed inset-0 bg-slate-950/90 flex flex-col items-center justify-center z-[90] p-4 no-print backdrop-blur-sm">
         <div class="w-full max-w-lg bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700">
             <button type="button" onclick="lukkScanner()" class="absolute top-4 right-4 bg-slate-800 hover:bg-red-500 text-white rounded-full p-2 z-10 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -406,11 +405,11 @@
     </div>
 
     <!-- Meldingsboks -->
-    <div id="msgModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[150] p-4 no-print backdrop-blur-sm">
+    <div id="msgModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4 no-print backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-slate-700">
             <h3 id="msgModalTitle" class="text-xl font-black mb-2 text-white mt-4"></h3>
             <p id="msgModalText" class="text-slate-300 mb-6 text-sm whitespace-pre-wrap"></p>
-            <button type="button" onclick="document.getElementById('msgModal').classList.add('hidden')" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold w-full shadow-lg">OK</button>
+            <button onclick="document.getElementById('msgModal').classList.add('hidden')" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold w-full shadow-lg">OK</button>
         </div>
     </div>
 
@@ -444,14 +443,14 @@
         });
 
         window.setupKontaktOppslag = function(inputID, type) {
-            document.getElementById(inputID).addEventListener('change', (e) => {
+            document.getElementById(inputID).addEventListener('input', (e) => {
                 const navn = e.target.value.trim();
                 const kontakter = JSON.parse(localStorage.getItem('fb_kontakter_' + type) || '{}');
                 if (kontakter[navn]) {
                     document.getElementById(type + 'Adresse').value = kontakter[navn].adresse || '';
                     document.getElementById(type + 'Postnr').value = kontakter[navn].postnr || '';
                     document.getElementById(type + 'Sted').value = kontakter[navn].sted || '';
-                    if(kontakter[navn].ref) document.getElementById(type + 'Ref').value = kontakter[navn].ref || '';
+                    document.getElementById(type + 'Ref').value = kontakter[navn].ref || '';
                 }
             });
         }
@@ -655,7 +654,7 @@
                 await signInAnonymously(auth);
                 
                 const s = document.getElementById('cloudStatus');
-                if(s) { s.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i> Skyen tilkoblet'; s.classList.remove('text-yellow-500'); s.classList.add('text-green-400'); }
+                if(s) { s.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i> Skyen'; s.classList.remove('text-yellow-500'); s.classList.add('text-green-400'); }
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } catch(e) { console.error(e); }
         }
@@ -674,7 +673,6 @@
             } catch (e) { visMelding("Databasen nekter", e.message); }
         }
 
-        // --- SKANNER ---
         let html5QrcodeScanner = null;
         window.startScanner = function() {
             document.getElementById('scannerModal').classList.remove('hidden');
