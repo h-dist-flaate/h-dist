@@ -7,7 +7,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Strekkode-generator for utskriften -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <script type="module">
@@ -21,7 +20,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         
-        /* Utskrifts-stiler */
         #utskriftsVisning { display: none; }
         .a4-ark { background-color: white; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 15mm; color: black; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
         .clean-box { border: 1px solid black; padding: 2mm; box-sizing: border-box; }
@@ -38,23 +36,19 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Vanlig Skjermvisning -->
     <div id="hovedInnhold" class="pb-10 flex flex-col items-center justify-start p-4 sm:p-8">
         <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden mt-2 sm:mt-6 border border-slate-200">
             
-            <!-- Header med STOR LOGO -->
             <div class="bg-blue-900 p-10 sm:p-14 text-center relative overflow-hidden">
                 <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent"></div>
                 <div class="relative z-10 flex flex-col items-center justify-center">
-                    <!-- Her er logoen gjort mye større (h-32 / sm:h-48) -->
                     <img src="thumbnail_image001.png" alt="Helgeland Distribusjon Logo" class="h-32 sm:h-48 mx-auto mb-6 bg-white p-4 rounded-3xl shadow-2xl object-contain w-auto max-w-[90%]" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-32 h-32 mx-auto text-white mb-6\'></i>'">
                     
-                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-widest uppercase drop-shadow-md">Bestill Frakt</h1>
+                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-widest uppercase drop-shadow-md flex items-center gap-3">Bestill Frakt <span class="bg-blue-800 text-blue-200 border border-blue-600 px-2 py-1 rounded-xl text-xs font-black tracking-widest shadow-inner">v1.4</span></h1>
                     <p class="text-blue-200 mt-2 font-bold tracking-widest uppercase text-sm sm:text-base">Helgeland Distribusjon</p>
                 </div>
             </div>
 
-            <!-- Kvittering (Skjult som standard) -->
             <div id="kvitteringSkjerm" class="hidden p-10 text-center flex-col items-center justify-center">
                 <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border-4 border-white">
                     <i data-lucide="check" class="w-12 h-12 text-green-500"></i>
@@ -78,10 +72,8 @@
                 <p class="text-xs text-slate-400 mt-6">Merk: Ved forsendelse med båt/ferge, vennligst skriv ut og fest fraktbrevet på godset.</p>
             </div>
 
-            <!-- Bestillingsskjema -->
             <form id="bestillingsSkjema" class="p-6 sm:p-10 space-y-8">
                 
-                <!-- Avsender -->
                 <div class="space-y-4">
                     <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
                         <i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i> Henteadresse (Avsender)
@@ -110,7 +102,6 @@
                     </div>
                 </div>
 
-                <!-- Mottaker -->
                 <div class="space-y-4 pt-4">
                     <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
                         <i data-lucide="user" class="w-5 h-5 text-blue-600"></i> Leveringsadresse (Mottaker)
@@ -139,7 +130,6 @@
                     </div>
                 </div>
 
-                <!-- Godsinformasjon -->
                 <div class="space-y-4 pt-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                     <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
                         <i data-lucide="package" class="w-5 h-5 text-blue-600"></i> Godsinformasjon
@@ -178,14 +168,12 @@
                     </div>
                 </div>
 
-                <!-- Send knapp -->
                 <div class="pt-4">
                     <button type="submit" id="btnSend" class="w-full bg-blue-600 text-white font-black text-lg py-5 px-6 rounded-xl hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition-transform active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wide">
                         <i data-lucide="send" class="w-6 h-6"></i> Fullfør Bestilling
                     </button>
                 </div>
                 
-                <!-- Viser hvis kunden venter på tilkobling -->
                 <div id="statusMelding" class="text-center text-sm text-slate-500 mt-2 font-medium flex items-center justify-center gap-2">
                     <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Laster system...
                 </div>
@@ -265,7 +253,6 @@
                     </tr>
                 </thead>
                 <tbody id="printVarelinjer" style="min-height: 40mm;">
-                    <!-- Fylles automatisk ved utskrift -->
                 </tbody>
                 <tfoot>
                     <tr>
@@ -311,7 +298,7 @@
         const configAppId = "fraktbrev-h-dist";
         
         let db = null;
-        let lagretOrdre = null; // Lagrer info for utskrift
+        let lagretOrdre = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -406,8 +393,7 @@
                 const { doc, setDoc } = window.firebaseModules;
                 await setDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', ordrenummer), bestillingsData);
                 
-                // Suksess!
-                lagretOrdre = bestillingsData; // Lagre for utskrift
+                lagretOrdre = bestillingsData;
                 document.getElementById('bestillingsSkjema').classList.add('hidden');
                 document.getElementById('kvitteringSkjerm').classList.remove('hidden');
                 document.getElementById('kvitteringSkjerm').classList.add('flex');
@@ -422,7 +408,6 @@
             }
         });
 
-        // Funksjon for å bygge og skrive ut fraktbrevet
         window.forberedUtskrift = function() {
             if (!lagretOrdre) return;
 
@@ -438,7 +423,6 @@
             
             document.getElementById('printInstrukser').innerText = lagretOrdre.instrukser;
 
-            // Fyll inn varelinjen
             const v = lagretOrdre.varer[0];
             document.getElementById('printVarelinjer').innerHTML = `<tr>
                 <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.merk}</td>
@@ -453,7 +437,6 @@
             document.getElementById('printTotalVekt').innerText = v.vekt;
             document.getElementById('printTotalVolum').innerText = v.volum;
 
-            // Generer strekkode
             setTimeout(() => {
                 const barcodeSvg = document.getElementById('printStrekkode');
                 try { 
@@ -461,7 +444,6 @@
                     barcodeSvg.style.display = 'block'; 
                 } catch(e) { barcodeSvg.style.display = 'none'; }
                 
-                // Kall på utskriftsdialogen
                 window.print();
             }, 100);
         }
