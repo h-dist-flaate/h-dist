@@ -36,7 +36,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Administrasjon <span class="text-blue-400 font-bold ml-1">v1.3</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Live Dispatch & Administrasjon <span class="text-blue-400 font-bold ml-1">v1.4</span></p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -46,7 +46,6 @@
         </div>
     </header>
 
-    <!-- Fane-navigasjon -->
     <nav class="bg-slate-800 border-b border-slate-700 px-4 py-2 flex gap-2 shrink-0 overflow-x-auto custom-scrollbar shadow-md z-10 relative">
         <button id="tab-live" onclick="byttFane('live')" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-colors whitespace-nowrap">
             <i data-lucide="map" class="w-4 h-4"></i> Live Kart
@@ -59,7 +58,6 @@
         </button>
     </nav>
 
-    <!-- VIEW: LIVE KART -->
     <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
@@ -89,7 +87,6 @@
         </div>
     </main>
 
-    <!-- VIEW: TIL FAKTURERING -->
     <main id="view-faktura" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -109,16 +106,13 @@
                                 <th class="p-4 border-b border-slate-700 text-right">Handling</th>
                             </tr>
                         </thead>
-                        <tbody id="liste-til-faktura" class="divide-y divide-slate-700">
-                            <!-- Fylles med JS -->
-                        </tbody>
+                        <tbody id="liste-til-faktura" class="divide-y divide-slate-700"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- VIEW: FERDIG FAKTURERT -->
     <main id="view-ferdig" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -137,16 +131,13 @@
                                 <th class="p-4 border-b border-slate-700 text-right">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="liste-ferdig-faktura" class="divide-y divide-slate-700">
-                            <!-- Fylles med JS -->
-                        </tbody>
+                        <tbody id="liste-ferdig-faktura" class="divide-y divide-slate-700"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Tildel Rute Modal -->
     <div id="tildelModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
             <div class="flex justify-between items-center mb-4">
@@ -154,7 +145,6 @@
                 <button onclick="lukkTildelModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <p class="text-slate-400 mb-2 text-sm">Send ordre <strong id="tildelOrdreNr" class="text-white"></strong> til rute:</p>
-            
             <select id="tildelInput" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 mb-6 font-bold">
                 <option value="">-- Ingen rute --</option>
                 <option value="Nesna">1. Nesna</option>
@@ -164,7 +154,6 @@
                 <option value="Sandnessjøen">5. Sandnessjøen</option>
                 <option value="Mosjøen">6. Mosjøen</option>
             </select>
-            
             <div class="flex gap-2">
                 <button onclick="fjernTildeling()" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Fjern</button>
                 <button onclick="lagreTildeling()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-500 flex-1">Lagre & Send</button>
@@ -172,7 +161,6 @@
         </div>
     </div>
 
-    <!-- Vis Signatur/Bilde Modal -->
     <div id="bildeModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-4 w-full max-w-lg border border-slate-700 relative flex flex-col items-center">
             <button onclick="document.getElementById('bildeModal').classList.add('hidden')" class="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg z-10"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -184,20 +172,15 @@
         </div>
     </div>
 
-    <!-- Historikk / Sporings Modal -->
     <div id="historikkModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[140] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-700 relative flex flex-col max-h-[85vh]">
             <button onclick="document.getElementById('historikkModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black text-white mb-1 flex items-center gap-2"><i data-lucide="clock" class="text-blue-400"></i> Sporingslogg</h3>
             <p id="historikkOrdrenr" class="text-slate-400 text-sm mb-6 pb-2 border-b border-slate-700 font-mono"></p>
-            
-            <div id="historikkListe" class="overflow-y-auto custom-scrollbar pr-2 flex-1">
-                <!-- Fylles automatisk med JS -->
-            </div>
+            <div id="historikkListe" class="overflow-y-auto custom-scrollbar pr-2 flex-1"></div>
         </div>
     </div>
 
-    <!-- Vis Fraktbrev Modal -->
     <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
             <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -219,9 +202,7 @@
                 
                 <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
                     <h4 class="text-xs text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> Fraktinformasjon</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-slate-200" id="fbModalInfo">
-                        <!-- Fylles automatisk -->
-                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-slate-200" id="fbModalInfo"></div>
                     <div class="mt-4 pt-4 border-t border-slate-700 text-sm">
                         <span class="text-slate-400 font-bold">Instrukser:</span> <span id="fbModalInstrukser" class="text-slate-200 italic"></span>
                     </div>
@@ -237,9 +218,7 @@
                                 <th class="p-3 text-center">Volum</th>
                             </tr>
                         </thead>
-                        <tbody id="fbModalGods" class="divide-y divide-slate-800">
-                            <!-- Varelinjer fylles her -->
-                        </tbody>
+                        <tbody id="fbModalGods" class="divide-y divide-slate-800"></tbody>
                     </table>
                 </div>
 
@@ -277,7 +256,6 @@
             if(faneId === 'live' && map) { setTimeout(() => { map.invalidateSize(); }, 100); }
         }
 
-        // Esri ArcGIS kart som fungerer supert uten API-nøkkel
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([66.2, 13.5], 8);
             L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -352,7 +330,6 @@
                         }
                     }
 
-                    // Knapper
                     const dokInfoKnapp = `<button onclick="visFraktbrevDetaljer('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-orange-400 mr-1 shadow-sm" title="Se Fraktbrev"><i data-lucide="file-text" class="w-4 h-4"></i></button>`;
                     const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-blue-400 mr-1 shadow-sm" title="Se Historikk"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
                     let bildeKnapp = '';
@@ -446,28 +423,18 @@
             });
         }
 
-        // --- Fraktbrev Detalje-visning ---
         window.visFraktbrevDetaljer = function(id) {
             const ordre = alleFraktbrev.find(o => o._id === id);
             if(!ordre) return;
 
             document.getElementById('fbModalOrdrenr').innerText = ordre.sendingsnummer || id;
             
-            // Avsender
             let avs = ordre.avsender || {};
-            document.getElementById('fbModalAvsender').innerHTML = `
-                <strong class="text-white text-base">${avs.navn||'Ikke oppgitt'}</strong><br>
-                ${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}<br>
-                <span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref: ${avs.ref||'-'}</span>`;
+            document.getElementById('fbModalAvsender').innerHTML = `<strong class="text-white text-base">${avs.navn||'Ikke oppgitt'}</strong><br>${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}<br><span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref: ${avs.ref||'-'}</span>`;
             
-            // Mottaker
             let mot = ordre.mottaker || {};
-            document.getElementById('fbModalMottaker').innerHTML = `
-                <strong class="text-white text-base">${mot.navn||'Ikke oppgitt'}</strong><br>
-                ${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}<br>
-                <span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref/Tlf: ${mot.ref||'-'}</span>`;
+            document.getElementById('fbModalMottaker').innerHTML = `<strong class="text-white text-base">${mot.navn||'Ikke oppgitt'}</strong><br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}<br><span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref/Tlf: ${mot.ref||'-'}</span>`;
 
-            // Info
             document.getElementById('fbModalInfo').innerHTML = `
                 <div><span class="text-slate-400 block text-xs uppercase mb-1">Dato</span><span class="font-medium">${ordre.dato||'-'}</span></div>
                 <div><span class="text-slate-400 block text-xs uppercase mb-1">Transportør</span><span class="font-medium">${ordre.transportor||'-'}</span></div>
@@ -476,7 +443,6 @@
             `;
             document.getElementById('fbModalInstrukser').innerText = ordre.instrukser || 'Ingen spesielle instrukser registrert.';
 
-            // Gods
             const tbody = document.getElementById('fbModalGods');
             tbody.innerHTML = '';
             let totVekt = 0, totVolum = 0, totAntall = 0;
@@ -518,12 +484,9 @@
             if (!ordre.historikk || ordre.historikk.length === 0) {
                 container.innerHTML = '<div class="text-slate-400 text-sm text-center p-8 flex flex-col items-center gap-2"><i data-lucide="info" class="w-8 h-8 opacity-50"></i> Ingen sporingshistorikk funnet.</div>';
             } else {
-                // Sorter nyeste hendelse øverst
                 const historikkSortert = [...ordre.historikk].sort((a,b) => b.tidspunkt - a.tidspunkt);
-                
                 historikkSortert.forEach(hendelse => {
                     const dato = new Date(hendelse.tidspunkt).toLocaleString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    
                     let ikon = "check-circle", farge = "text-slate-400";
                     if(hendelse.status.includes('bil')) { ikon = 'truck'; farge = 'text-blue-400'; }
                     if(hendelse.status.includes('terminal')) { ikon = 'building'; farge = 'text-yellow-400'; }
@@ -548,20 +511,11 @@
         window.oppdaterFakturaStatus = async function(id, status) {
             if(!db || !id) return;
             const { doc, updateDoc } = window.firebaseModules;
-            try { 
-                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', id), { 
-                    fakturert: status,
-                    fakturertTidspunkt: status ? Date.now() : null
-                }); 
-            } 
+            try { await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', id), { fakturert: status, fakturertTidspunkt: status ? Date.now() : null }); } 
             catch (e) { alert("Kunne ikke oppdatere: " + e.message); }
         }
 
-        window.kartFokus = function(lat, lng) {
-            byttFane('live');
-            map.setView([lat, lng], 15);
-        }
-
+        window.kartFokus = function(lat, lng) { byttFane('live'); map.setView([lat, lng], 15); }
         window.filtrerListe = function() { fordelDataTilSkjermer(); }
         window.filtrerArkiv = function() { fordelDataTilSkjermer(); }
 
@@ -570,7 +524,6 @@
             document.getElementById('bildeModalTittel').innerText = isPhoto ? "Fotobevis for levering" : "Kundens Signatur";
             document.getElementById('bildeModalTekst').innerText = isPhoto ? "Sjåfør valgte levering uten signatur." : "Signert for mottak på mobil.";
             
-            // Hvis det er en signatur, legger vi til grå bakgrunn så hvite streker vises!
             if(!isPhoto) { 
                 document.getElementById('visningBilde').classList.add('bg-slate-500'); 
                 document.getElementById('visningBilde').classList.remove('bg-white'); 
