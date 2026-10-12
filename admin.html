@@ -12,7 +12,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
         
-        /* Animasjon for bakgrunn */
         .bg-grid {
             background-size: 40px 40px;
             background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
@@ -24,82 +23,64 @@
 </head>
 <body class="min-h-screen relative flex flex-col items-center justify-center p-4 sm:p-8">
 
-    <!-- Bakgrunnsmønster -->
     <div class="absolute inset-0 bg-grid pointer-events-none z-0"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent pointer-events-none z-0"></div>
 
     <div class="w-full max-w-5xl relative z-10">
         
-        <!-- Header -->
         <div class="text-center mb-12">
             <div class="inline-block bg-white p-4 rounded-3xl shadow-2xl mb-6 shadow-blue-900/50">
                 <img src="thumbnail_image001.png" alt="Helgeland Distribusjon" class="h-20 object-contain" onerror="this.outerHTML='<i data-lucide=\'box\' class=\'w-20 h-20 text-blue-600\'></i>'">
             </div>
             <h1 class="text-3xl sm:text-5xl font-black text-white tracking-widest uppercase drop-shadow-lg mb-2">Systemportal</h1>
-            <p class="text-slate-400 font-medium tracking-widest uppercase text-sm">Hovedmeny & Administrasjon</p>
+            <p class="text-slate-400 font-medium tracking-widest uppercase text-sm flex items-center justify-center gap-2">Hovedmeny & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest">v1.4</span></p>
         </div>
 
-        <!-- Applikasjons-grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            <!-- 1. Flåtesentral -->
             <a href="Fraktbrev%20H-Dist/fl_tesentral_kontor.html" class="group bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl hover:shadow-blue-900/40 hover:border-blue-500 transition-all hover:-translate-y-1 flex flex-col h-full">
                 <div class="bg-blue-600/20 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
                     <i data-lucide="satellite" class="w-8 h-8 text-blue-400 group-hover:text-white transition-colors"></i>
                 </div>
                 <h2 class="text-xl font-bold text-white mb-2">Flåtesentral</h2>
                 <p class="text-slate-400 text-sm flex-1">Kontrolltårnet. Se live-kart over biler, administrer ruter, ordreoversikt og flytt oppdrag til fakturering.</p>
-                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-blue-500 group-hover:text-blue-400 flex items-center gap-1">
-                    Åpne program <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
+                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-blue-500 group-hover:text-blue-400 flex items-center gap-1">Åpne program <i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <!-- 2. Fraktbrev Generator -->
             <a href="Fraktbrev%20H-Dist/fraktbrev_generator.html" class="group bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl hover:shadow-emerald-900/40 hover:border-emerald-500 transition-all hover:-translate-y-1 flex flex-col h-full">
                 <div class="bg-emerald-600/20 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 transition-colors">
                     <i data-lucide="printer" class="w-8 h-8 text-emerald-400 group-hover:text-white transition-colors"></i>
                 </div>
                 <h2 class="text-xl font-bold text-white mb-2">Fraktbrev Generator</h2>
                 <p class="text-slate-400 text-sm flex-1">Verktøy for kontoret. Opprett nye fraktbrev manuelt, skriv ut A4-papirer, og generer strekkodeetiketter.</p>
-                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-emerald-500 group-hover:text-emerald-400 flex items-center gap-1">
-                    Åpne program <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
+                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-emerald-500 group-hover:text-emerald-400 flex items-center gap-1">Åpne program <i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <!-- 3. Sjåfør Terminal -->
             <a href="Fraktbrev%20H-Dist/sj_f_r_terminal.html" class="group bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl hover:shadow-orange-900/40 hover:border-orange-500 transition-all hover:-translate-y-1 flex flex-col h-full">
                 <div class="bg-orange-600/20 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-600 transition-colors">
                     <i data-lucide="smartphone" class="w-8 h-8 text-orange-400 group-hover:text-white transition-colors"></i>
                 </div>
                 <h2 class="text-xl font-bold text-white mb-2">Sjåfør Terminal</h2>
                 <p class="text-slate-400 text-sm flex-1">Mobilappen for sjåfører. Skann etiketter, oppdater status, ta fotobevis og innhent kunders signatur på skjerm.</p>
-                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-orange-500 group-hover:text-orange-400 flex items-center gap-1">
-                    Åpne program <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
+                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-orange-500 group-hover:text-orange-400 flex items-center gap-1">Åpne program <i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <!-- 4. Bestillingsportal -->
             <a href="bestilling.html" target="_blank" class="group bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl hover:shadow-purple-900/40 hover:border-purple-500 transition-all hover:-translate-y-1 flex flex-col h-full">
                 <div class="bg-purple-600/20 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 transition-colors">
                     <i data-lucide="shopping-cart" class="w-8 h-8 text-purple-400 group-hover:text-white transition-colors"></i>
                 </div>
                 <h2 class="text-xl font-bold text-white mb-2">Bestillingsportal</h2>
                 <p class="text-slate-400 text-sm flex-1">Kundesiden (Offentlig). Her kan kunder fylle ut og sende inn fraktbestillinger rett inn i deres system.</p>
-                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-purple-500 group-hover:text-purple-400 flex items-center gap-1">
-                    Åpne (Ny fane) <i data-lucide="external-link" class="w-4 h-4"></i>
-                </div>
+                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-purple-500 group-hover:text-purple-400 flex items-center gap-1">Åpne (Ny fane) <i data-lucide="external-link" class="w-4 h-4"></i></div>
             </a>
 
-            <!-- 5. Sporingsside -->
             <a href="Sporing.html" target="_blank" class="group bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl hover:shadow-pink-900/40 hover:border-pink-500 transition-all hover:-translate-y-1 flex flex-col h-full">
                 <div class="bg-pink-600/20 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:bg-pink-600 transition-colors">
                     <i data-lucide="search" class="w-8 h-8 text-pink-400 group-hover:text-white transition-colors"></i>
                 </div>
                 <h2 class="text-xl font-bold text-white mb-2">Sporingsside</h2>
                 <p class="text-slate-400 text-sm flex-1">Kundesiden (Offentlig). La kundene skrive inn sitt sendingsnummer for å se live status og historikk.</p>
-                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-pink-500 group-hover:text-pink-400 flex items-center gap-1">
-                    Åpne (Ny fane) <i data-lucide="external-link" class="w-4 h-4"></i>
-                </div>
+                <div class="mt-4 text-xs font-bold uppercase tracking-wider text-pink-500 group-hover:text-pink-400 flex items-center gap-1">Åpne (Ny fane) <i data-lucide="external-link" class="w-4 h-4"></i></div>
             </a>
 
         </div>
@@ -110,9 +91,6 @@
     </div>
 
     <script>
-        // Start opp ikoner
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        });
+        document.addEventListener('DOMContentLoaded', () => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
     </script>
 </body>
