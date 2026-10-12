@@ -19,7 +19,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overscroll-behavior-y: contain; }
-        /* Her er bakgrunnen på tegnebrettet gjort lyst (hvitt) */
         #signaturePad { border: 2px dashed #475569; border-radius: 0.75rem; cursor: crosshair; touch-action: none; background: #f8fafc; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -187,6 +186,11 @@
         let db = null, auth = null, gjeldendeOrdreId = null, minBilId = "";
         let ruteLytter = null;
         let canvas, ctx, isDrawing = false;
+        
+        // Ny funksjonalitet for varsling
+        let kjenteOppdrag = [];
+        let forsteInnlasting = true;
+        let lydKontekst = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -208,6 +212,30 @@
 
         window.apneBilValg = () => document.getElementById('bilModal').classList.remove('hidden');
 
+        function initLyd() {
+            if (!lydKontekst) { lydKontekst = new (window.AudioContext || window.webkitAudioContext)(); }
+            if (lydKontekst.state === 'suspended') { lydKontekst.resume(); }
+        }
+
+        function spillVarselLyd() {
+            if (!lydKontekst) return;
+            const osc = lydKontekst.createOscillator();
+            const gain = lydKontekst.createGain();
+            osc.connect(gain); gain.connect(lydKontekst.destination);
+            
+            // Et lyst og fint "Pling-Plong" (Toner D5 og A5)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, lydKontekst.currentTime); 
+            osc.frequency.setValueAtTime(880.00, lydKontekst.currentTime + 0.1); 
+            
+            gain.gain.setValueAtTime(0, lydKontekst.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, lydKontekst.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, lydKontekst.currentTime + 0.5);
+            
+            osc.start(lydKontekst.currentTime);
+            osc.stop(lydKontekst.currentTime + 0.5);
+        }
+
         window.lagreBilValg = function() {
             const val = document.getElementById('bilIdInput').value;
             if(!val) { alert("Vennligst velg en rute fra listen."); return; }
@@ -215,6 +243,15 @@
             localStorage.setItem('hdist_rute_id', minBilId);
             document.getElementById('headerTittel').innerText = minBilId.toUpperCase();
             document.getElementById('bilModal').classList.add('hidden');
+            
+            // Låser opp lydmotoren når brukeren trykker på knappen (påkrevd av mobiler)
+            initLyd();
+            
+            // Spør om lov til å sende varsler
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+            
             startRuteLytter();
         }
 
@@ -232,20 +269,49 @@
             } catch(e) { console.error(e); }
         }
 
+        function utlosVarsel(kundeNavn) {
+            // Spill av varsellyden
+            spillVarselLyd();
+
+            // Prøv å vibrer hvis mobilen støtter det
+            if(navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
+            
+            // Prøv å send push-varsel
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("Nytt oppdrag tildelt!", {
+                    body: "Du har fått en ny pakke til: " + kundeNavn,
+                    icon: "thumbnail_image001.png"
+                });
+            }
+        }
+
         function startRuteLytter() {
             if (!db || !minBilId) return;
             const { collection, onSnapshot } = window.firebaseModules;
             const collRef = collection(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev');
             if (ruteLytter) ruteLytter(); 
 
+            forsteInnlasting = true; // Nullstill når vi bytter rute
+
             ruteLytter = onSnapshot(collRef, (snapshot) => {
                 const mineOppdrag = [];
+                
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data.assignedTo === minBilId && !data.signature && !data.photoProof) {
                         mineOppdrag.push({ _id: doc.id, ...data });
+                        
+                        // Sjekk om dette er et HELT nytt oppdrag
+                        if (!forsteInnlasting && !kjenteOppdrag.includes(doc.id)) {
+                            utlosVarsel(data.mottaker?.navn || "Ukjent kunde");
+                        }
                     }
                 });
+                
+                // Oppdater listen over kjente oppdrag
+                kjenteOppdrag = mineOppdrag.map(o => o._id);
+                forsteInnlasting = false;
+                
                 tegnRuteListe(mineOppdrag);
             });
         }
