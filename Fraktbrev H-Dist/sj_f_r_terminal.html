@@ -33,7 +33,7 @@
                 <img src="thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-6 h-6 text-white\'></i>'">
             </div>
             <div>
-                <h1 class="text-sm font-black tracking-wider text-white uppercase" id="headerTittel">VELG RUTE</h1>
+                <h1 class="text-sm font-black tracking-wider text-white uppercase flex items-center gap-2"><span id="headerTittel">VELG RUTE</span> <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v1.4</span></h1>
                 <p id="cloudStatus" class="text-xs text-yellow-500 font-medium tracking-widest uppercase flex items-center gap-1">
                     <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Kobler til...
                 </p>
@@ -187,7 +187,6 @@
         let ruteLytter = null;
         let canvas, ctx, isDrawing = false;
         
-        // Ny funksjonalitet for varsling
         let kjenteOppdrag = [];
         let forsteInnlasting = true;
         let lydKontekst = null;
@@ -223,7 +222,6 @@
             const gain = lydKontekst.createGain();
             osc.connect(gain); gain.connect(lydKontekst.destination);
             
-            // Et lyst og fint "Pling-Plong" (Toner D5 og A5)
             osc.type = 'sine';
             osc.frequency.setValueAtTime(587.33, lydKontekst.currentTime); 
             osc.frequency.setValueAtTime(880.00, lydKontekst.currentTime + 0.1); 
@@ -244,14 +242,10 @@
             document.getElementById('headerTittel').innerText = minBilId.toUpperCase();
             document.getElementById('bilModal').classList.add('hidden');
             
-            // Låser opp lydmotoren når brukeren trykker på knappen (påkrevd av mobiler)
             initLyd();
-            
-            // Spør om lov til å sende varsler
             if ("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission();
             }
-            
             startRuteLytter();
         }
 
@@ -270,18 +264,10 @@
         }
 
         function utlosVarsel(kundeNavn) {
-            // Spill av varsellyden
             spillVarselLyd();
-
-            // Prøv å vibrer hvis mobilen støtter det
             if(navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
-            
-            // Prøv å send push-varsel
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("Nytt oppdrag tildelt!", {
-                    body: "Du har fått en ny pakke til: " + kundeNavn,
-                    icon: "thumbnail_image001.png"
-                });
+                new Notification("Nytt oppdrag tildelt!", { body: "Du har fått en ny pakke til: " + kundeNavn, icon: "thumbnail_image001.png" });
             }
         }
 
@@ -291,7 +277,7 @@
             const collRef = collection(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev');
             if (ruteLytter) ruteLytter(); 
 
-            forsteInnlasting = true; // Nullstill når vi bytter rute
+            forsteInnlasting = true;
 
             ruteLytter = onSnapshot(collRef, (snapshot) => {
                 const mineOppdrag = [];
@@ -301,17 +287,14 @@
                     if (data.assignedTo === minBilId && !data.signature && !data.photoProof) {
                         mineOppdrag.push({ _id: doc.id, ...data });
                         
-                        // Sjekk om dette er et HELT nytt oppdrag
                         if (!forsteInnlasting && !kjenteOppdrag.includes(doc.id)) {
                             utlosVarsel(data.mottaker?.navn || "Ukjent kunde");
                         }
                     }
                 });
                 
-                // Oppdater listen over kjente oppdrag
                 kjenteOppdrag = mineOppdrag.map(o => o._id);
                 forsteInnlasting = false;
-                
                 tegnRuteListe(mineOppdrag);
             });
         }
@@ -382,35 +365,20 @@
             if(!db || !gjeldendeOrdreId) return;
             const { doc, updateDoc, arrayUnion } = window.firebaseModules;
             try {
-                const hendelse = {
-                    status: nyStatus,
-                    tidspunkt: Date.now(),
-                    rute: minBilId,
-                    utfortAv: 'Sjåfør Terminal'
-                };
-
-                const updateData = { 
-                    status: nyStatus,
-                    historikk: arrayUnion(hendelse) 
-                };
-
+                const hendelse = { status: nyStatus, tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Sjåfør Terminal' };
+                const updateData = { status: nyStatus, historikk: arrayUnion(hendelse) };
                 if (nyStatus === 'På bil') { updateData.assignedTo = minBilId; }
-                
                 await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', gjeldendeOrdreId), updateData);
                 visMelding("Oppdatert ✅", `Status satt til: ${nyStatus}`);
                 avbrytLevering();
             } catch(e) { visMelding("Feil", e.message); }
         }
 
-        // --- SIGNATUR OG FOTO ---
         function setupSignaturePadEvents() {
             canvas = document.getElementById('signaturePad');
             ctx = canvas.getContext('2d');
             
-            const getPos = e => { 
-                const r = canvas.getBoundingClientRect(); 
-                return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; 
-            };
+            const getPos = e => { const r = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; };
             const start = e => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); };
             const draw = e => { if (!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
             const stop = () => { isDrawing = false; };
@@ -426,17 +394,11 @@
             setTimeout(() => {
                 const container = document.getElementById('canvasContainer');
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                
                 canvas.width = container.offsetWidth * ratio; 
                 canvas.height = container.offsetHeight * ratio;
-                
                 ctx.scale(ratio, ratio);
-                ctx.lineWidth = 4; 
-                ctx.lineCap = 'round'; 
-                
-                // Her settes pennen til mørkeblå/svart!
-                ctx.strokeStyle = '#0f172a';
-                
+                ctx.lineWidth = 4; ctx.lineCap = 'round'; 
+                ctx.strokeStyle = '#0f172a'; // Svart penn for hvit bakgrunn
                 tomSignatur(); 
             }, 50);
         }
@@ -448,9 +410,7 @@
             const blank = document.createElement('canvas'); blank.width = canvas.width; blank.height = canvas.height;
             if (canvas.toDataURL() === blank.toDataURL()) { alert("Vennligst signer først."); return; }
             const b64 = canvas.toDataURL("image/png");
-            
             const hendelse = { status: 'Levert', tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Sjåfør (Signatur)' };
-            
             sendLeveringTilSky({ signature: b64, status: 'Levert', signertTidspunkt: Date.now(), historikk: window.firebaseModules.arrayUnion(hendelse) }, 'btnGodkjennSignatur', 'LAGRE SIGNATUR');
         }
 
@@ -474,9 +434,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const base64Photo = canvas.toDataURL('image/jpeg', 0.6); 
-                    
                     const hendelse = { status: 'Levert (Bilde)', tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Sjåfør (Foto)' };
-                    
                     sendLeveringTilSky({ photoProof: base64Photo, status: 'Levert', signertTidspunkt: Date.now(), historikk: window.firebaseModules.arrayUnion(hendelse) }, 'btnTaBilde', origHTML);
                 }
                 img.src = e.target.result;
@@ -509,7 +467,6 @@
             } else { utforLagring(); }
         }
 
-        // --- SKANNER ---
         let html5QrcodeScanner = null;
         window.startScanner = function() {
             document.getElementById('scannerModal').classList.remove('hidden');
