@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Strekkode-motor for utskrift -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <script type="module">
@@ -46,7 +45,6 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 p-2 rounded-lg shadow-blue-900/50 shadow-lg">
@@ -54,8 +52,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <!-- VERSJON: Endret til v1.7 -->
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v1.7</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v1.8</span></p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -65,7 +62,6 @@
         </div>
     </header>
 
-    <!-- Fane-navigasjon -->
     <nav class="bg-slate-800 border-b border-slate-700 px-4 py-2 flex gap-2 shrink-0 overflow-x-auto custom-scrollbar shadow-md z-10 relative">
         <button id="tab-live" onclick="byttFane('live')" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-colors whitespace-nowrap">
             <i data-lucide="map" class="w-4 h-4"></i> Live Kart
@@ -78,7 +74,6 @@
         </button>
     </nav>
 
-    <!-- VIEW: LIVE KART -->
     <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
@@ -108,7 +103,6 @@
         </div>
     </main>
 
-    <!-- VIEW: TIL FAKTURERING -->
     <main id="view-faktura" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -135,7 +129,6 @@
         </div>
     </main>
 
-    <!-- VIEW: FERDIG FAKTURERT -->
     <main id="view-ferdig" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -161,7 +154,6 @@
         </div>
     </main>
 
-    <!-- Tildel Rute Modal -->
     <div id="tildelModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
             <div class="flex justify-between items-center mb-4">
@@ -177,6 +169,7 @@
                 <option value="Mo">4. Mo</option>
                 <option value="Sandnessjøen">5. Sandnessjøen</option>
                 <option value="Mosjøen">6. Mosjøen</option>
+                <option value="Hattfjelldal">7. Hattfjelldal</option>
             </select>
             <div class="flex gap-2">
                 <button onclick="fjernTildeling()" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Fjern</button>
@@ -185,7 +178,6 @@
         </div>
     </div>
 
-    <!-- Vis Signatur/Bilde Modal -->
     <div id="bildeModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-4 w-full max-w-lg border border-slate-700 relative flex flex-col items-center">
             <button onclick="document.getElementById('bildeModal').classList.add('hidden')" class="absolute -top-3 -right-3 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg z-10"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -197,7 +189,6 @@
         </div>
     </div>
 
-    <!-- Historikk / Sporings Modal -->
     <div id="historikkModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[140] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-700 relative flex flex-col max-h-[85vh]">
             <button onclick="document.getElementById('historikkModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -207,7 +198,6 @@
         </div>
     </div>
 
-    <!-- Fraktbrev Detaljer Modal (NÅ MED UTSKRIFTSKNAPP) -->
     <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
             <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -254,13 +244,11 @@
         </div>
     </div>
 
-    <!-- UTKSRIFTSVISNING A4 (KUN SYNLIG NÅR DU TRYKKER PÅ SKRIV UT) -->
     <div id="utskriftsVisning">
         <div class="a4-ark mx-auto">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
                 <div style="width: 50%;">
                     <div style="display: flex; align-items: center; gap: 4mm; margin-bottom: 3mm;">
-                        <!-- Henter logo -->
                         <img src="../thumbnail_image001.png" style="max-height: 18mm; max-width: 45mm; object-fit: contain;" alt="Logo" onerror="this.style.display='none'">
                         <div>
                             <h1 style="font-size: 22pt; font-weight: 900; letter-spacing: 1px; margin: 0; line-height: 1;">FRAKTBREV</h1>
@@ -376,7 +364,7 @@
         let db, auth, map, markersLayer, alleFraktbrev = [];
         let valgtTildelId = null;
         let aktivFane = 'live';
-        let aktivtFraktbrevForUtskrift = null; // Lagrer det åpne fraktbrevet
+        let aktivtFraktbrevForUtskrift = null; 
 
         document.addEventListener('DOMContentLoaded', () => { initMap(); initFirebase(); });
 
@@ -579,7 +567,7 @@
             const ordre = alleFraktbrev.find(o => o._id === id);
             if(!ordre) return;
             
-            aktivtFraktbrevForUtskrift = ordre; // Lagrer for utskrift
+            aktivtFraktbrevForUtskrift = ordre;
 
             document.getElementById('fbModalOrdrenr').innerText = ordre.sendingsnummer || id;
             
@@ -627,7 +615,6 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // --- UTSKRIFTSFUNKSJON ---
         window.skrivUtÅpnetFraktbrev = function() {
             if(!aktivtFraktbrevForUtskrift) return;
             const ordre = aktivtFraktbrevForUtskrift;
@@ -675,7 +662,6 @@
 
             document.getElementById('printInstrukser').innerText = ordre.instrukser || '-';
 
-            // Signatur / Bilde
             const sigImg = document.getElementById('printSignatureImage');
             const gpsTekst = document.getElementById('printGpsData');
             
@@ -686,7 +672,6 @@
                 else { gpsTekst.innerText = ordre.photoProof ? 'Fotobevis' : 'Signert elektronisk'; }
             } else { sigImg.style.display = 'none'; gpsTekst.innerText = ''; }
 
-            // Generer strekkode og skriv ut
             setTimeout(() => {
                 const barcodeSvg = document.getElementById('printStrekkode');
                 try { 
@@ -699,7 +684,6 @@
             }, 100);
         }
 
-        // Fjern utskriftsmodus når vinduet lukkes
         window.onafterprint = function() {
             document.body.classList.remove('print-mode-a4');
         }
