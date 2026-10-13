@@ -50,7 +50,7 @@
                     <!-- BESTILLING Tekst -->
                     <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-widest uppercase drop-shadow-md mb-6">BESTILL TRANSPORT</h1>
                     
-                    <!-- H.A Hanssen Logo (Med dynamisk lasting avhengig av format) -->
+                    <!-- H.A Hanssen Logo -->
                     <div class="flex flex-col items-center">
                         <img src="hanssen-1.png" onerror="if (this.src.indexOf('hanssen-1.jpg') === -1) { this.src='hanssen-1.jpg'; } else if (this.src.indexOf('hanssen-1.jpeg') === -1) { this.src='hanssen-1.jpeg'; } else { this.outerHTML='<span class=\'text-2xl font-black text-red-900 tracking-widest bg-white px-6 py-2 rounded-xl border border-red-200 shadow-lg\'>H.A HANSSEN</span>'; }" alt="H.A Hanssen Logo" class="h-10 sm:h-16 object-contain bg-white px-4 py-2 rounded-xl border border-red-100 shadow-lg">
                     </div>
@@ -147,9 +147,19 @@
                         <i data-lucide="package" class="w-5 h-5 text-blue-600"></i> Godsinformasjon
                     </h2>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div class="col-span-2 sm:col-span-4">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Beskrivelse av gods (Hva sendes?) *</label>
-                            <input type="text" id="godsBeskrivelse" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-white" placeholder="F.eks. Kjøttvarer, Kasser">
+                        
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Kategori *</label>
+                            <select id="godsMerk" class="w-full p-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 outline-none bg-blue-50 font-bold text-blue-900 appearance-none shadow-sm cursor-pointer hover:bg-blue-100 transition-colors">
+                                <option value="Kjøl">❄️ Kjølevare</option>
+                                <option value="Frys">🧊 Frysevare</option>
+                                <option value="Tørr">📦 Tørrvare</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-span-2 sm:col-span-3">
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Beskrivelse av gods</label>
+                            <input type="text" id="godsBeskrivelse" value="Kjøttvarer" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
                         </div>
                         
                         <div class="col-span-2 sm:col-span-1">
@@ -172,15 +182,6 @@
                         <div class="col-span-1">
                             <label class="block text-sm font-bold text-slate-700 mb-1">Volum (m³)</label>
                             <input type="number" step="0.01" id="godsVolum" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-white text-center" placeholder="m³">
-                        </div>
-                        
-                        <!-- FRAKTBETALER VALG -->
-                        <div class="col-span-2 sm:col-span-4 mt-2 p-4 bg-slate-100 rounded-xl border border-slate-200">
-                            <label class="block text-sm font-bold text-slate-700 mb-2">Fraktbetaler</label>
-                            <div class="flex flex-wrap gap-4 items-center">
-                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="betaler" value="Avsender" checked class="w-4 h-4 text-blue-600"><span class="text-sm font-medium">Avsender</span></label>
-                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="betaler" value="Mottaker" class="w-4 h-4 text-blue-600"><span class="text-sm font-medium">Mottaker</span></label>
-                            </div>
                         </div>
 
                         <div class="col-span-2 sm:col-span-4 mt-2">
@@ -324,7 +325,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
-            // Postnummeroppslag nå på BEGGE felt siden avsender kan redigere
             setupPostnrOppslag('motPostnr', 'motSted');
             initFirebase();
         });
@@ -372,16 +372,12 @@
 
             const ordrenummer = Math.floor(80000000 + Math.random() * 10000000).toString();
             
-            // Hent verdien av fraktbetaler valget
-            const betalerTypeElement = document.querySelector('input[name="betaler"]:checked');
-            const betalerType = betalerTypeElement ? betalerTypeElement.value : 'Avsender';
-            
             const bestillingsData = {
                 sendingsnummer: ordrenummer,
                 dato: new Date().toISOString().split('T')[0],
                 transportor: "Helgeland Distribusjon",
                 incoterms: "DAP",
-                betaler: betalerType,
+                betaler: "Avsender", // Fastlåst for H.A. Hanssen
                 instrukser: document.getElementById('instrukser').value || "",
                 avsender: {
                     navn: document.getElementById('avsNavn').value,
@@ -398,10 +394,10 @@
                     ref: document.getElementById('motRef').value
                 },
                 varer: [{
-                    merk: "Tørr",
+                    merk: document.getElementById('godsMerk').value, // Kjøl / Frys / Tørr
                     antall: document.getElementById('godsAntall').value,
                     emballasje: document.getElementById('godsEmballasje').value,
-                    art: document.getElementById('godsBeskrivelse').value,
+                    art: document.getElementById('godsBeskrivelse').value, // Låst til Kjøttvarer
                     vekt: document.getElementById('godsVekt').value,
                     volum: document.getElementById('godsVolum').value || ""
                 }],
