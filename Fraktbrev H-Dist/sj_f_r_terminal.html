@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sjåførterminal v1.8</title>
+    <title>Sjåførterminal v1.9</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -35,7 +35,7 @@
             <div>
                 <h1 class="text-sm font-black tracking-wider text-white uppercase flex items-center gap-2">
                     <span id="headerTittel">VELG RUTE</span> 
-                    <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v1.8</span>
+                    <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v1.9</span>
                 </h1>
                 <p id="cloudStatus" class="text-xs text-yellow-500 font-medium tracking-widest uppercase flex items-center gap-1">
                     <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Kobler til...
@@ -53,7 +53,14 @@
                 <i data-lucide="scan-line" class="w-12 h-12 text-white"></i>
                 <span class="text-lg font-black text-white tracking-widest">SKANN</span>
             </button>
-            <p class="text-slate-400 text-xs text-center">Skann etikett for å laste inn/ut av bil,<br>eller velg fra ruten din under.</p>
+            <p class="text-slate-400 text-xs text-center mb-4">Skann etikett for å laste inn/ut av bil,<br>eller velg fra ruten din under.</p>
+
+            <form onsubmit="sokManueltOrdrenr(event)" class="w-full max-w-xs relative flex items-center mt-2">
+                <input type="text" id="manuellOrdreInput" placeholder="Skriv inn fraktbrevnr..." class="w-full bg-slate-800 text-white text-sm font-bold px-4 py-3 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 pr-12 transition-colors">
+                <button type="submit" class="absolute right-2 top-2 bottom-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg px-3 flex items-center justify-center transition-colors">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </button>
+            </form>
         </div>
 
         <div class="flex-1 flex flex-col overflow-hidden bg-slate-900">
@@ -569,5 +576,45 @@
             }).catch(e => { lukkScanner(); visMelding("Kamerafeil", "Tillat bruk av kamera."); });
         }
         window.lukkScanner = function() { if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(e=>{}); document.getElementById('scannerModal').classList.add('hidden'); }
+        
+        window.sokManueltOrdrenr = async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('manuellOrdreInput');
+            const idOppslag = input.value.trim();
+            if (!idOppslag) return;
+
+            if (!db) {
+                visMelding("Feil", "Ikke tilkoblet skyen enda.");
+                return;
+            }
+
+            const btn = e.target.querySelector('button');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-white"></i>';
+            btn.disabled = true;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            try {
+                const { doc, getDoc } = window.firebaseModules;
+                const docSnap = await getDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', idOppslag));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.signature || data.photoProof) { 
+                        visMelding("Allerede levert", "Dette fraktbrevet er ferdig levert og arkivert."); 
+                    } else {
+                        visLeveringPåSkjerm({_id: docSnap.id, ...data});
+                        input.value = ''; 
+                    }
+                } else { 
+                    visMelding("Ikke funnet", `Fant ikke pakke med nummer ${idOppslag}. Sjekk at nummeret stemmer.`); 
+                }
+            } catch(error) { 
+                visMelding("Feil", error.message); 
+            } finally {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
     </script>
 </body>
