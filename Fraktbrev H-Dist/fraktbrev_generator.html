@@ -5,12 +5,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- App/Fullskjerm-modus for Android & iPhone (Oppdatert manifest som fungerer!) -->
+    <!-- App/Fullskjerm-modus for Android & iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#f1f5f9">
-    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Fraktbrev%20Generator%22%2C%22short_name%22%3A%22Fraktbrev%22%2C%22start_url%22%3A%22%3Fmode%3Dgenerator%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f1f5f9%22%2C%22theme_color%22%3A%22%231e3a8a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22..%2Fthumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
+    
+    <!-- Dynamisk Manifest for å unngå at Chrome blokkerer appen -->
+    <link id="manifest-link" rel="manifest" href="">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const manifest = {
+                name: "Fraktbrev Generator",
+                short_name: "Fraktbrev",
+                id: "fraktbrev-generator-app-v2",
+                start_url: window.location.href.split('?')[0] + "?app=true",
+                display: "standalone",
+                background_color: "#f1f5f9",
+                theme_color: "#1e3a8a",
+                icons: [{
+                    src: new URL("../thumbnail_image001.png", window.location.href).href,
+                    sizes: "192x192",
+                    type: "image/png"
+                }]
+            };
+            const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+        });
+    </script>
 
     <title>Fraktbrev Generator</title>
     
@@ -259,7 +281,7 @@
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
                 <div style="width: 50%;">
                     <div style="display: flex; align-items: center; gap: 4mm; margin-bottom: 3mm;">
-                        <img src="thumbnail_image001.png" style="max-height: 18mm; max-width: 45mm; object-fit: contain;" alt="Logo" onerror="this.style.display='none'">
+                        <img src="../thumbnail_image001.png" style="max-height: 18mm; max-width: 45mm; object-fit: contain;" alt="Logo" onerror="this.style.display='none'">
                         <div>
                             <h1 style="font-size: 22pt; font-weight: 900; letter-spacing: 1px; margin: 0; line-height: 1;">FRAKTBREV</h1>
                             <div style="font-size: 8pt; color: #444;">Waybill / Consignment Note</div>
@@ -367,6 +389,7 @@
         </div>
     </div>
 
+    <!-- ETIKETTVISNING -->
     <div id="etikettVisning" class="relative flex-col items-center">
         <div class="no-print w-full max-w-[102mm] flex justify-between gap-4 z-10 mb-6">
             <button onclick="lukkEtikett()" class="bg-slate-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-600 shadow-lg flex items-center gap-2">← Tilbake</button>
@@ -543,7 +566,7 @@
             
             const tBox = document.getElementById('printTransportor');
             const transportor = document.getElementById('transportor').value;
-            if(transportor.toLowerCase().includes("helgeland dist")) { tBox.innerHTML = `<img src="thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`; } 
+            if(transportor.toLowerCase().includes("helgeland dist")) { tBox.innerHTML = `<img src="../thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`; } 
             else { tBox.innerText = transportor; }
 
             document.getElementById('printIncoterms').innerText = document.getElementById('incoterms').value;
@@ -623,7 +646,7 @@
             const transportor = document.getElementById('transportor').value;
             let transHTML = transportor.toUpperCase();
             if(transportor.toLowerCase().includes("helgeland dist")) {
-                transHTML = `<img src="thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`;
+                transHTML = `<img src="../thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`;
             }
             
             const vektStr = document.getElementById('sumVekt').innerText;
