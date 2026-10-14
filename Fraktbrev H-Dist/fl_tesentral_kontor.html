@@ -27,6 +27,9 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
         .sig-bilde { background-color: #f8fafc; padding: 4px; border-radius: 8px; }
 
+        /* SKJUL UTSKRIFTSVISNING PÅ VANLIG SKJERM */
+        #utskriftsVisning { display: none; }
+
         /* A4 Ark Design */
         .a4-ark { background-color: white; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 15mm; color: black; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
         .clean-box { border: 1px solid black; padding: 2mm; box-sizing: border-box; }
@@ -88,7 +91,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.2</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.3</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -326,7 +329,7 @@
 
     <!-- ETIKETTVISNING -->
     <div id="etikettVisning" class="hidden fixed inset-0 z-[200] bg-slate-800 overflow-y-auto flex-col items-center p-8">
-        <div class="no-print w-full max-w-[102mm] flex justify-between gap-4 z-10 mb-6 shrink-0">
+        <div class="no-print w-full max-w-[102mm] flex justify-between gap-4 z-10 mb-6 mx-auto">
             <button onclick="lukkEtikettPreview()" class="bg-slate-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-500 shadow-lg flex items-center gap-2">← Tilbake</button>
             <button onclick="window.print()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 hover:bg-blue-500">
                 <i data-lucide="printer" class="w-5 h-5"></i> Skriv Ut
@@ -834,6 +837,7 @@
                 else { gpsTekst.innerText = ordre.photoProof ? 'Fotobevis' : 'Signert elektronisk'; }
             } else { sigImg.style.display = 'none'; gpsTekst.innerText = ''; }
 
+            // Generer strekkode og skriv ut
             setTimeout(() => {
                 const barcodeSvg = document.getElementById('printStrekkode');
                 try { 
@@ -841,20 +845,25 @@
                     barcodeSvg.style.display = 'block'; 
                 } catch(e) { barcodeSvg.style.display = 'none'; }
                 
-                document.body.className = 'print-mode-a4';
+                document.body.classList.add('print-mode-a4');
+                document.getElementById('utskriftsVisning').style.display = 'block';
+                
+                // Magisk forsinkelse slik at mobilen rekker å tegne opp A4-arket før print-dialogen tar bilde!
                 setTimeout(() => {
                     window.print();
                 }, 400);
+                
             }, 100);
         }
 
-        // Fjern utskriftsmodus når vinduet lukkes. Sjekk kun etter a4 klassen slik at Etiketter forblir aktive
+        // Fjern utskriftsmodus når vinduet lukkes
         window.onafterprint = function() {
             if(document.body.classList.contains('print-mode-a4')) {
                 document.body.classList.remove('print-mode-a4');
+                document.getElementById('utskriftsVisning').style.display = 'none';
             }
         }
-
+        
         window.visEtikettFraFlatesentral = function() {
             if(!aktivtFraktbrevForUtskrift) return;
             const ordre = aktivtFraktbrevForUtskrift;
