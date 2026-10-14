@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- App/Fullskjerm-modus for Android & iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
-    <!-- Denne manifest-koden tryller nettsiden om til en Android-app som fjerner adresselinjen! -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Sj%C3%A5f%C3%B8rterminal%22%2C%22short_name%22%3A%22Sj%C3%A5f%C3%B8r%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22thumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
     
-    <title>Sjåførterminal v2.2</title>
+    <title>Sjåførterminal v2.3</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -44,7 +42,7 @@
             <div>
                 <h1 class="text-sm font-black tracking-wider text-white uppercase flex items-center gap-2">
                     <span id="headerTittel">VELG RUTE</span> 
-                    <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v2.2</span>
+                    <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v2.3</span>
                 </h1>
                 <p id="cloudStatus" class="text-xs text-yellow-500 font-medium tracking-widest uppercase flex items-center gap-1">
                     <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Kobler til...
@@ -115,8 +113,8 @@
                         <div id="infoAvsenderSted" class="text-slate-300 text-sm font-medium"></div>
                     </div>
                     <div>
-                        <div class="text-xs text-slate-400 font-bold uppercase mb-1">Vekt / Volum</div>
-                        <div class="text-sm font-medium text-slate-200"><span id="infoVekt"></span> kg</div>
+                        <div class="text-xs text-slate-400 font-bold uppercase mb-1">Antall / Vekt</div>
+                        <div class="text-sm font-medium text-slate-200"><span id="infoAntall" class="font-bold text-blue-400"></span> stk / <span id="infoVekt"></span> kg</div>
                     </div>
                 </div>
             </div>
@@ -130,10 +128,39 @@
                 <i data-lucide="building" class="w-6 h-6 text-yellow-400"></i> <span class="text-xs uppercase tracking-wider">Ut på terminal</span>
             </button>
         </div>
+        
+        <!-- NY KNAPP FOR AVVIK -->
+        <button onclick="apneAvvikModal()" class="w-full bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50 py-3 rounded-xl font-bold flex items-center justify-center gap-2 mb-4 transition-colors">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i> REGISTRER AVVIK / FEIL
+        </button>
+
         <button onclick="apneSignaturModal()" class="w-full bg-green-600 hover:bg-green-500 text-white py-5 rounded-xl font-black text-lg shadow-lg flex items-center justify-center gap-2 mb-8 transition-transform active:scale-[0.98]">
             <i data-lucide="check-circle" class="w-6 h-6"></i> LEVER TIL KUNDE
         </button>
     </main>
+
+    <!-- Avvik Modal -->
+    <div id="avvikModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[130] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="text-red-500"></i> Registrer Avvik</h3>
+            <p class="text-slate-400 text-sm mb-4">Hva er problemet med sendingen?</p>
+            
+            <select id="avvikType" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-red-500 mb-4 font-bold appearance-none">
+                <option value="Mangler kolli">Mangler kolli (Ikke komplett)</option>
+                <option value="Skadet gods">Skadet gods</option>
+                <option value="Kunde stengt">Kunde stengt / Ikke tilstede</option>
+                <option value="Feil adresse">Feil adresse</option>
+                <option value="Annet avvik">Annet avvik</option>
+            </select>
+
+            <textarea id="avvikKommentar" placeholder="Skriv en kort kommentar (Valgfritt men anbefalt)..." class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-red-500 mb-6 text-sm h-24 custom-scrollbar"></textarea>
+            
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('avvikModal').classList.add('hidden')" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Avbryt</button>
+                <button onclick="lagreAvvik()" class="bg-red-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-500 flex-1 flex items-center justify-center gap-2 shadow-lg shadow-red-900/50"><i data-lucide="save" class="w-4 h-4"></i> Lagre</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Rutevalg Modal -->
     <div id="bilModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[120] p-4 backdrop-blur-sm">
@@ -337,11 +364,23 @@
             liste.innerHTML = '';
             oppdrag.forEach(ordre => {
                 const statusTekst = ordre.status || "Ubehandlet";
-                const ikonClass = statusTekst === 'På bil' ? 'text-blue-400 bg-blue-900/50' : (statusTekst === 'På terminal' ? 'text-yellow-400 bg-yellow-900/50' : 'text-slate-400 bg-slate-800');
-                const ikonType = statusTekst === 'På bil' ? 'truck' : (statusTekst === 'På terminal' ? 'building' : 'package');
+                
+                let ikonClass = 'text-slate-400 bg-slate-800';
+                let ikonType = 'package';
+                
+                if (statusTekst.includes('Avvik')) {
+                    ikonClass = 'text-red-400 bg-red-900/50';
+                    ikonType = 'alert-triangle';
+                } else if (statusTekst === 'På bil') {
+                    ikonClass = 'text-blue-400 bg-blue-900/50';
+                    ikonType = 'truck';
+                } else if (statusTekst === 'På terminal') {
+                    ikonClass = 'text-yellow-400 bg-yellow-900/50';
+                    ikonType = 'building';
+                }
 
                 const div = document.createElement('div');
-                div.className = "bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center justify-between active:scale-[0.98] transition-transform cursor-pointer hover:bg-slate-700";
+                div.className = `border border-slate-700 p-4 rounded-xl shadow-lg flex items-center justify-between active:scale-[0.98] transition-transform cursor-pointer hover:bg-slate-700 ${statusTekst.includes('Avvik') ? 'bg-red-950/20 border-red-900/50' : 'bg-slate-800'}`;
                 div.onclick = () => visLeveringPåSkjerm(ordre);
                 
                 div.innerHTML = `
@@ -350,7 +389,7 @@
                         <div class="truncate">
                             <h4 class="text-white font-bold truncate">${ordre.mottaker?.navn || 'Ukjent'}</h4>
                             <p class="text-slate-400 text-xs truncate">${ordre.mottaker?.sted || ''}</p>
-                            <p class="text-slate-500 text-[10px] font-black tracking-widest mt-1">${statusTekst.toUpperCase()}</p>
+                            <p class="text-slate-500 text-[10px] font-black tracking-widest mt-1 ${statusTekst.includes('Avvik') ? 'text-red-400' : ''}">${statusTekst.toUpperCase()}</p>
                         </div>
                     </div>
                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 shrink-0"></i>
@@ -369,11 +408,13 @@
         function visLeveringPåSkjerm(data) {
             gjeldendeOrdreId = data._id;
             document.getElementById('infoSendingsnrTop').innerText = data.sendingsnummer || data._id;
-            let statIcon = "package", statColor = "text-slate-400";
-            if(data.status === 'På bil') { statIcon = "truck"; statColor = "text-blue-400"; }
-            if(data.status === 'På terminal') { statIcon = "building"; statColor = "text-yellow-400"; }
             
-            document.getElementById('infoStatus').innerHTML = `<i data-lucide="${statIcon}" class="w-4 h-4 ${statColor}"></i> ${data.status || 'Ubehandlet'}`;
+            let statIcon = "package", statColor = "text-slate-400";
+            if(data.status && data.status.includes('Avvik')) { statIcon = "alert-triangle"; statColor = "text-red-400"; }
+            else if(data.status === 'På bil') { statIcon = "truck"; statColor = "text-blue-400"; }
+            else if(data.status === 'På terminal') { statIcon = "building"; statColor = "text-yellow-400"; }
+            
+            document.getElementById('infoStatus').innerHTML = `<i data-lucide="${statIcon}" class="w-4 h-4 ${statColor}"></i> <span class="${data.status && data.status.includes('Avvik') ? 'text-red-400' : ''}">${data.status || 'Ubehandlet'}</span>`;
             
             document.getElementById('infoMottakerNavn').innerText = data.mottaker?.navn || 'Ukjent';
             document.getElementById('infoMottakerAdresse').innerText = data.mottaker?.adresse || '';
@@ -383,9 +424,15 @@
             document.getElementById('infoAvsenderAdresse').innerText = data.avsender?.adresse || '';
             document.getElementById('infoAvsenderSted').innerText = `${data.avsender?.postnr || ''} ${data.avsender?.sted || ''}`;
             
-            let totalVekt = 0;
-            if (data.varer) { data.varer.forEach(v => { totalVekt += Number(v.vekt) || 0; }); }
-            document.getElementById('infoVekt').innerText = totalVekt.toFixed(1);
+            let totalVekt = 0, totalAntall = 0;
+            if (data.varer) { 
+                data.varer.forEach(v => { 
+                    totalVekt += Number(v.vekt) || 0; 
+                    totalAntall += Number(v.antall) || 0;
+                }); 
+            }
+            document.getElementById('infoAntall').innerText = totalAntall;
+            document.getElementById('infoVekt').innerText = totalVekt > 0 ? totalVekt.toFixed(1) : '-';
 
             document.getElementById('hovedskjerm').classList.add('hidden');
             document.getElementById('leveringsskjerm').classList.remove('hidden');
@@ -433,6 +480,36 @@
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             } else { utforLagring(null); }
+        }
+
+        // --- AVVIK FUNKSJONER ---
+        window.apneAvvikModal = function() {
+            document.getElementById('avvikKommentar').value = '';
+            document.getElementById('avvikModal').classList.remove('hidden');
+        }
+
+        window.lagreAvvik = async function() {
+            if(!db || !gjeldendeOrdreId) return;
+            
+            const type = document.getElementById('avvikType').value;
+            const kommentar = document.getElementById('avvikKommentar').value.trim();
+            const fullStatus = "Avvik: " + type;
+            const loggTekst = kommentar ? `${type} - ${kommentar}` : type;
+
+            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
+            try {
+                const hendelse = { status: "Avvik registrert: " + loggTekst, tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Sjåfør Terminal' };
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', gjeldendeOrdreId), { 
+                    status: fullStatus, 
+                    historikk: arrayUnion(hendelse) 
+                });
+                
+                document.getElementById('avvikModal').classList.add('hidden');
+                avbrytLevering();
+                visMelding("Avvik Lagret", "Kontoret har blitt oppdatert med informasjonen.");
+            } catch(e) {
+                visMelding("Feil", e.message);
+            }
         }
 
         function setupSignaturePadEvents() {
