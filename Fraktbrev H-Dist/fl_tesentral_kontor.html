@@ -27,19 +27,32 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
         .sig-bilde { background-color: #f8fafc; padding: 4px; border-radius: 8px; }
 
-        /* Utskrifts-stiler */
-        #utskriftsVisning { display: none; background-color: white; }
-        .skjul-ved-print { display: none !important; }
+        /* A4 Ark Design */
         .a4-ark { background-color: white; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 15mm; color: black; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
         .clean-box { border: 1px solid black; padding: 2mm; box-sizing: border-box; }
         .box-title { font-size: 8pt; font-weight: bold; margin-bottom: 2mm; display: block; text-transform: uppercase; }
         .box-content { font-size: 10pt; line-height: 1.3; }
 
+        /* Etikett Design */
+        .etikett-ark { background-color: white; width: 102mm; height: 192mm; box-sizing: border-box; padding: 5mm; color: black; font-family: Arial, sans-serif; position: relative; page-break-after: always; margin-bottom: 20px;}
+        .etikett-ark:last-child { page-break-after: auto; margin-bottom: 0; }
+
+        /* Utskrifts-stiler */
         @media print {
-            @page { margin: 0; size: A4 portrait; }
-            body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: black !important; }
-            #utskriftsVisning { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background-color: white !important; }
-            .a4-ark { width: 100% !important; box-shadow: none !important; margin: 0 !important; }
+            @page { margin: 0; }
+            body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            /* Skjul alt på skjermen untatt det som skal printes basert på modus */
+            body.print-mode-a4 > :not(#utskriftsVisning) { display: none !important; }
+            body.print-mode-a4 @page { size: A4 portrait; }
+            body.print-mode-a4 #utskriftsVisning { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+            body.print-mode-a4 .a4-ark { box-shadow: none !important; margin: 0 !important; }
+            
+            body.print-mode-label > :not(#etikettVisning) { display: none !important; }
+            body.print-mode-label @page { size: 102mm 192mm portrait; }
+            body.print-mode-label #etikettVisning { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background: white !important; padding: 0 !important; }
+            body.print-mode-label .etikett-ark { box-shadow: none !important; margin: 0 !important; padding: 5mm 5mm 5mm 8mm !important; }
+            body.print-mode-label .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -66,13 +79,16 @@
 
     <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
+            <a href="../admin.html" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white p-2 rounded-lg transition-colors border border-slate-700 shadow-sm" title="Tilbake til Systemportal">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
             <div class="bg-blue-600 p-2 rounded-lg shadow-blue-900/50 shadow-lg">
                 <img src="../thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'satellite\' class=\'w-6 h-6 text-white\'></i>'">
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.1</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.2</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -96,6 +112,7 @@
             <i data-lucide="check-square" class="w-4 h-4"></i> Ferdig Fakturert
         </button>
     </nav>
+
     <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
@@ -115,7 +132,7 @@
                     <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm uppercase"><i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Ordreoversikt</h2>
                     <input type="text" id="sokeFeltLive" onkeyup="filtrerListe()" placeholder="Søk ordrenr/navn..." class="bg-slate-950 border border-slate-700 text-sm text-white px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 w-40 transition-all">
                 </div>
-                <div id="ordreListe" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+                <div id="ordreListe" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-4">
                     <div class="text-center p-8 text-slate-500 text-sm"><i data-lucide="loader" class="w-6 h-6 animate-spin mx-auto mb-2"></i>Venter på innlogging...</div>
                 </div>
             </div>
@@ -226,6 +243,7 @@
                 <h3 class="text-xl font-black text-white flex items-center gap-2"><i data-lucide="file-text" class="text-blue-400"></i> Fraktbrev: <span id="fbModalOrdrenr" class="text-white"></span></h3>
                 <div class="flex gap-2">
                     <button onclick="apneRedigerModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-md transition-colors"><i data-lucide="edit" class="w-4 h-4"></i> Rediger</button>
+                    <button onclick="visEtikettFraFlatesentral()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-md transition-colors"><i data-lucide="tag" class="w-4 h-4"></i> Lag Etikett</button>
                     <button onclick="skrivUtÅpnetFraktbrev()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-md transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Skriv ut (A4)</button>
                 </div>
             </div>
@@ -306,8 +324,22 @@
         </div>
     </div>
 
-    <!-- UTKSRIFTSVISNING A4 -->
-    <div id="utskriftsVisning">
+    <!-- ETIKETTVISNING -->
+    <div id="etikettVisning" class="relative flex-col items-center bg-slate-700 min-h-screen p-8 hidden">
+        <div class="no-print w-full max-w-[102mm] flex justify-between gap-4 z-10 mb-6 mx-auto">
+            <button onclick="lukkEtikettPreview()" class="bg-slate-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-500 shadow-lg flex items-center gap-2">← Tilbake</button>
+            <button onclick="window.print()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 hover:bg-blue-500">
+                <i data-lucide="printer" class="w-5 h-5"></i> Skriv Ut
+            </button>
+        </div>
+
+        <div id="etiketterContainer" class="flex flex-col gap-8 w-full items-center">
+            <!-- Her sprøytes etikettene inn via JavaScript -->
+        </div>
+    </div>
+
+    <!-- UTKSRIFTSVISNING A4 (GJEMT FREM TIL DU TRYKKER PÅ SKRIV UT) -->
+    <div id="utskriftsVisning" class="hidden">
         <div class="a4-ark mx-auto">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
                 <div style="width: 50%;">
@@ -419,6 +451,7 @@
             </div>
         </div>
     </div>
+
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -430,7 +463,6 @@
         let aktivtFraktbrevForUtskrift = null; 
 
         document.addEventListener('DOMContentLoaded', () => { 
-            // Sjekk passord først
             if (localStorage.getItem('flate_admin_auth') === 'true') {
                 lukkOppSystem();
             } else {
@@ -526,6 +558,7 @@
         function tegnLiveSkjerm(dataListe) {
             const listeContainer = document.getElementById('ordreListe');
             const sokFelt = document.getElementById('sokeFeltLive').value.toLowerCase();
+            listeContainer.innerHTML = '';
             markersLayer.clearLayers();
 
             let aktiveCount = 0, levertCount = 0;
@@ -612,8 +645,6 @@
                 }
             });
 
-            listeContainer.innerHTML = '';
-            
             function formaterGruppe(tittel, ikon, farge, border, elementer) {
                 if(elementer.length === 0) return '';
                 return `
@@ -810,28 +841,93 @@
                     barcodeSvg.style.display = 'block'; 
                 } catch(e) { barcodeSvg.style.display = 'none'; }
                 
-                // Fiks for mobil: Gjem alt manuelt før utskrift
-                Array.from(document.body.children).forEach(child => {
-                    if (child.id !== 'utskriftsVisning' && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
-                        child.classList.add('skjul-ved-print');
-                    }
-                });
-                document.getElementById('utskriftsVisning').style.display = 'block';
-                
-                // Magisk forsinkelse slik at mobilen rekker å tegne opp A4-arket før print-dialogen tar bilde!
+                document.body.className = 'print-mode-a4';
                 setTimeout(() => {
                     window.print();
                 }, 400);
-                
             }, 100);
+        }
+
+        window.visEtikettFraFlatesentral = function() {
+            if(!aktivtFraktbrevForUtskrift) return;
+            const ordre = aktivtFraktbrevForUtskrift;
+            
+            let antallKolli = 0;
+            let totalVekt = 0;
+            if (ordre.varer) {
+                ordre.varer.forEach(v => {
+                    antallKolli += Number(v.antall) || 0;
+                    totalVekt += Number(v.vekt) || 0;
+                });
+            }
+            if (antallKolli === 0) antallKolli = 1;
+
+            const container = document.getElementById('etiketterContainer');
+            container.innerHTML = '';
+
+            const avs = ordre.avsender || {};
+            const mot = ordre.mottaker || {};
+            const d = ordre.dato ? new Date(ordre.dato) : new Date(ordre.lagretTidspunkt || Date.now());
+            const datoStr = !isNaN(d) ? `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}` : '-';
+            const sendingsnr = ordre.sendingsnummer || ordre._id;
+            
+            const transportor = ordre.transportor || 'Helgeland Distribusjon';
+            let transHTML = transportor.toUpperCase();
+            if(transportor.toLowerCase().includes("helgeland dist")) {
+                transHTML = `<img src="../thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`;
+            }
+
+            for(let i=1; i<=antallKolli; i++) {
+                const fraction = antallKolli > 1 ? `${i}/${antallKolli}` : `1/1`;
+                container.innerHTML += `
+                <div class="etikett-ark bg-white mx-auto shadow-2xl">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 2mm; margin-bottom: 4mm;">
+                        <div style="font-size: 9pt;"><strong>Avsender:</strong><br><span>${avs.navn||''}</span><br><span>${avs.postnr||''} ${avs.sted||''}</span><br><span style="font-size: 8pt; color: #444;">${avs.ref ? 'Ref: '+avs.ref : ''}</span></div>
+                        <div style="font-size: 9pt; text-align: right;"><strong>Dato:</strong><br><span>${datoStr}</span></div>
+                    </div>
+                    <div style="border-bottom: 2px solid black; padding-bottom: 4mm; margin-bottom: 4mm; min-height: 35mm;">
+                        <div style="font-size: 9pt; margin-bottom: 2mm;"><strong>Mottaker (Consignee):</strong></div>
+                        <div style="font-size: 16pt; font-weight: 900; line-height: 1.2;">${mot.navn||''}<br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}</div>
+                        <div style="font-size: 11pt; font-weight: bold; margin-top: 2mm;">${mot.ref ? 'Ref/Tlf: '+mot.ref : ''}</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 6mm;">
+                        <div><strong>Vekt total:</strong> <span>${totalVekt.toFixed(1)}</span> kg</div>
+                        <div><strong>Antall:</strong> <span>${antallKolli}</span> kolli (Kolli ${fraction})</div>
+                    </div>
+                    <div style="text-align: center; border-top: 2px dashed black; border-bottom: 2px dashed black; padding: 4mm 0; margin-bottom: 10mm;">
+                        <div style="font-size: 9pt; margin-bottom: 1mm;">TRANSPORTØR</div>
+                        <div style="font-size: 15pt; font-weight: 900; display: flex; justify-content: center; align-items: center; min-height: 18mm;">${transHTML}</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; position: absolute; bottom: 5mm; left: 0;">
+                        <svg id="lblStrekkode_${i}"></svg>
+                        <div style="font-size: 14pt; font-weight: bold; margin-top: 2mm;">${sendingsnr}</div>
+                    </div>
+                </div>`;
+            }
+
+            document.getElementById('fraktbrevModal').classList.add('hidden');
+            document.getElementById('etikettVisning').classList.remove('hidden');
+            document.getElementById('etikettVisning').classList.add('flex');
+            document.body.className = 'print-mode-label';
+
+            setTimeout(() => {
+                for(let i=1; i<=antallKolli; i++) {
+                    const barcodeSvg = document.getElementById(`lblStrekkode_${i}`);
+                    try { JsBarcode(barcodeSvg, sendingsnr, { format: "CODE128", width: 3, height: 80, displayValue: false, margin: 0 }); } catch(e) {}
+                }
+            }, 100);
+        }
+
+        window.lukkEtikettPreview = function() {
+            document.body.className = '';
+            document.getElementById('etikettVisning').classList.add('hidden');
+            document.getElementById('etikettVisning').classList.remove('flex');
+            document.getElementById('fraktbrevModal').classList.remove('hidden');
         }
 
         // Fjern utskriftsmodus når vinduet lukkes
         window.onafterprint = function() {
-            document.getElementById('utskriftsVisning').style.display = 'none';
-            document.querySelectorAll('.skjul-ved-print').forEach(child => {
-                child.classList.remove('skjul-ved-print');
-            });
+            document.body.className = '';
         }
 
         window.visHistorikk = function(id) {
