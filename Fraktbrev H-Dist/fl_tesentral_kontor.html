@@ -68,11 +68,11 @@
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 p-2 rounded-lg shadow-blue-900/50 shadow-lg">
-                <img src="thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'satellite\' class=\'w-6 h-6 text-white\'></i>'">
+                <img src="../thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'satellite\' class=\'w-6 h-6 text-white\'></i>'">
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.0</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.1</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -96,7 +96,6 @@
             <i data-lucide="check-square" class="w-4 h-4"></i> Ferdig Fakturert
         </button>
     </nav>
-
     <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
@@ -151,7 +150,6 @@
             </div>
         </div>
     </main>
-
     <main id="view-ferdig" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -421,7 +419,6 @@
             </div>
         </div>
     </div>
-
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -529,28 +526,33 @@
         function tegnLiveSkjerm(dataListe) {
             const listeContainer = document.getElementById('ordreListe');
             const sokFelt = document.getElementById('sokeFeltLive').value.toLowerCase();
-            listeContainer.innerHTML = '';
             markersLayer.clearLayers();
 
             let aktiveCount = 0, levertCount = 0;
             const iDagMidnatt = new Date(); iDagMidnatt.setHours(0,0,0,0);
+
+            const grupper = { avvik: [], ubehandlet: [], terminal: [], bil: [], levert: [] };
 
             dataListe.forEach(ordre => {
                 if (ordre.fakturert === true) return;
 
                 const erLevert = !!ordre.signature || !!ordre.photoProof;
                 const harGPS = !!ordre.gps;
+                const statusTekst = ordre.status || 'Registrert';
+                const erAvvik = statusTekst.toLowerCase().includes('avvik');
                 
                 if (erLevert) { if (ordre.signertTidspunkt && ordre.signertTidspunkt > iDagMidnatt.getTime()) levertCount++; } 
                 else { aktiveCount++; }
 
-                const matchSok = (`${ordre.sendingsnummer||''} ${ordre.mottaker?.navn||''} ${ordre.assignedTo||''} ${ordre.status||''}`.toLowerCase()).includes(sokFelt);
+                const matchSok = (`${ordre.sendingsnummer||''} ${ordre.mottaker?.navn||''} ${ordre.assignedTo||''} ${statusTekst}`.toLowerCase()).includes(sokFelt);
                 
                 if (matchSok) {
                     let ikon = "package", farge = "text-slate-400", bg = "bg-slate-700";
+                    
                     if (erLevert) { ikon = ordre.photoProof ? "camera" : "pen-tool"; farge = "text-green-400"; bg = "bg-green-900/20 opacity-70 border-green-900"; }
-                    else if (ordre.status === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
-                    else if (ordre.status === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
+                    else if (erAvvik) { ikon = "alert-triangle"; farge = "text-red-400"; bg = "bg-red-900/30 border-red-900"; }
+                    else if (statusTekst === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
+                    else if (statusTekst === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
                     
                     let tildelBadge = '';
                     if (!erLevert) {
@@ -570,32 +572,37 @@
                     }
                     const kartKnapp = harGPS ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm" title="Vis på kart"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : '';
 
-                    const element = document.createElement('div');
-                    element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
-                    element.innerHTML = `
-                        <div class="flex items-start gap-3">
-                            <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
-                            <div>
-                                <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] text-slate-400 font-normal ml-1">${ordre.status || 'Registrert'}</span></div>
-                                <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
-                                ${tildelBadge}
+                    const htmlString = `
+                        <div class="p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}">
+                            <div class="flex items-start gap-3">
+                                <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
+                                <div>
+                                    <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] ${erAvvik ? 'text-red-400 font-black' : 'text-slate-400 font-normal'} ml-1">${statusTekst}</span></div>
+                                    <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
+                                    ${tildelBadge}
+                                </div>
+                            </div>
+                            <div class="text-right flex items-end">
+                                ${dokInfoKnapp}
+                                ${sporingKnapp}
+                                ${bildeKnapp}
+                                ${kartKnapp}
                             </div>
                         </div>
-                        <div class="text-right flex items-end">
-                            ${dokInfoKnapp}
-                            ${sporingKnapp}
-                            ${bildeKnapp}
-                            ${kartKnapp}
-                        </div>
                     `;
-                    listeContainer.appendChild(element);
+                    
+                    if (erLevert) grupper.levert.push(htmlString);
+                    else if (erAvvik) grupper.avvik.push(htmlString);
+                    else if (statusTekst === 'På bil') grupper.bil.push(htmlString);
+                    else if (statusTekst === 'På terminal') grupper.terminal.push(htmlString);
+                    else grupper.ubehandlet.push(htmlString);
                 }
 
                 if (harGPS) {
                     let typeIkon = ''; let farge = '';
                     if (erLevert) { typeIkon = ordre.photoProof ? '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>' : '<path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle>'; farge = 'bg-green-500'; }
-                    else if (ordre.status === 'På terminal') { typeIkon = '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path>'; farge = 'bg-yellow-500'; }
-                    else if (ordre.status === 'På bil') { typeIkon = '<path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><path d="M14 17h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle>'; farge = 'bg-blue-500'; }
+                    else if (statusTekst === 'På terminal') { typeIkon = '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path>'; farge = 'bg-yellow-500'; }
+                    else if (statusTekst === 'På bil') { typeIkon = '<path d="M10 17h4V5H2v12h3"></path><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"></path><path d="M14 17h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle>'; farge = 'bg-blue-500'; }
 
                     if (typeIkon) {
                         const customIcon = L.divIcon({ className: 'custom-pin', html: `<div class="w-6 h-6 ${farge} border-2 border-white rounded-full shadow-lg flex items-center justify-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${typeIkon}</svg></div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
@@ -604,6 +611,32 @@
                     }
                 }
             });
+
+            listeContainer.innerHTML = '';
+            
+            function formaterGruppe(tittel, ikon, farge, border, elementer) {
+                if(elementer.length === 0) return '';
+                return `
+                    <div class="mb-6">
+                        <h3 class="text-xs font-bold ${farge} uppercase tracking-wider mb-3 flex items-center gap-2 border-b ${border} pb-2 px-1">
+                            <i data-lucide="${ikon}" class="w-4 h-4"></i> ${tittel} <span class="bg-slate-800 px-2 py-0.5 rounded-full text-[10px] ml-1">${elementer.length}</span>
+                        </h3>
+                        <div class="space-y-2">
+                            ${elementer.join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            listeContainer.innerHTML += formaterGruppe('⚠️ Avvik / Problemer', 'alert-triangle', 'text-red-400', 'border-red-900/50', grupper.avvik);
+            listeContainer.innerHTML += formaterGruppe('Nye / Ubehandlet', 'package', 'text-slate-300', 'border-slate-700', grupper.ubehandlet);
+            listeContainer.innerHTML += formaterGruppe('På Terminal', 'building', 'text-yellow-400', 'border-yellow-900/50', grupper.terminal);
+            listeContainer.innerHTML += formaterGruppe('Ute på bil', 'truck', 'text-blue-400', 'border-blue-900/50', grupper.bil);
+            listeContainer.innerHTML += formaterGruppe('Levert (Klar til fakturering)', 'check-circle', 'text-green-400', 'border-green-900/50', grupper.levert);
+
+            if (listeContainer.innerHTML === '') {
+                listeContainer.innerHTML = '<div class="text-center p-8 text-slate-500 text-sm flex flex-col items-center gap-2"><i data-lucide="inbox" class="w-8 h-8 opacity-50"></i>Ingen treff.</div>';
+            }
 
             document.getElementById('statAktive').innerText = aktiveCount;
             document.getElementById('statLevert').innerText = levertCount;
@@ -880,7 +913,7 @@
                 lukkTildelModal(); 
             } catch (e) { alert(e.message); }
         }
-
+        
         window.fjernTildeling = async function() {
             if(!db || !valgtTildelId) return;
             const { doc, updateDoc, arrayUnion } = window.firebaseModules;
