@@ -5,13 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- App/Fullskjerm-modus for Android & iPhone (Oppdatert med UNIK ID og start_url) -->
+    <!-- App/Fullskjerm-modus for Android & iPhone (Oppdatert manifest som fungerer!) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#f1f5f9">
-    <!-- Nytt, unikt manifest som tvinger telefonen til å lagre den som en separat app -->
-    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22id%22%3A%22generator-app-v2%22%2C%22start_url%22%3A%22fraktbrev_generator.html%22%2C%22name%22%3A%22Fraktbrev%20Generator%22%2C%22short_name%22%3A%22Fraktbrev%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f1f5f9%22%2C%22theme_color%22%3A%22%231e3a8a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22thumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Fraktbrev%20Generator%22%2C%22short_name%22%3A%22Fraktbrev%22%2C%22start_url%22%3A%22%3Fmode%3Dgenerator%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f1f5f9%22%2C%22theme_color%22%3A%22%231e3a8a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22..%2Fthumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
 
     <title>Fraktbrev Generator</title>
     
@@ -85,6 +84,7 @@
         <div class="bg-white shadow-xl rounded-xl p-4 sm:p-8 border border-slate-200">
             <form id="fraktbrevForm" class="space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Avsender -->
                     <div class="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
                         <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
                             <i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i> 1. Avsender
@@ -114,6 +114,7 @@
                         </div>
                     </div>
 
+                    <!-- Mottaker -->
                     <div class="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
                         <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
                             <i data-lucide="user" class="w-5 h-5 text-blue-600"></i> 2. Mottaker
@@ -241,7 +242,6 @@
         </div>
     </div>
 
-    <!-- UTKSRIFTSVISNING A4 -->
     <div id="utskriftsVisning" class="relative flex-col items-center">
         <div class="no-print w-full max-w-[210mm] flex justify-between gap-4 z-10 mb-6">
             <button onclick="redigerFraktbrev()" class="bg-slate-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-600 shadow-lg flex items-center gap-2">← Endre</button>
@@ -367,7 +367,6 @@
         </div>
     </div>
 
-    <!-- ETIKETTVISNING -->
     <div id="etikettVisning" class="relative flex-col items-center">
         <div class="no-print w-full max-w-[102mm] flex justify-between gap-4 z-10 mb-6">
             <button onclick="lukkEtikett()" class="bg-slate-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-600 shadow-lg flex items-center gap-2">← Tilbake</button>
