@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- App/Fullskjerm-modus for Android & iPhone (Egen ID for Generatoren) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#f1f5f9">
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Fraktbrev%20Generator%22%2C%22short_name%22%3A%22Fraktbrev%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f1f5f9%22%2C%22theme_color%22%3A%22%231e3a8a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22thumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
+
     <title>Fraktbrev Generator</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,11 +58,14 @@
         
         <div class="bg-slate-900 text-white rounded-xl p-6 shadow-xl flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 border border-slate-700">
             <div class="flex items-center gap-4">
+                <a href="../admin.html" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white p-2 rounded-lg transition-colors border border-slate-700 shadow-sm" title="Tilbake til Systemportal">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
                 <div class="bg-blue-600 p-2 rounded-xl shadow-lg">
-                    <img src="thumbnail_image001.png" alt="Firmalogo" class="w-14 h-14 object-contain bg-white rounded-lg shadow-sm p-1" onerror="this.outerHTML='<i data-lucide=\'package\' class=\'w-12 h-12 text-white\'></i>'">
+                    <img src="../thumbnail_image001.png" alt="Firmalogo" class="w-14 h-14 object-contain bg-white rounded-lg shadow-sm p-1" onerror="this.outerHTML='<i data-lucide=\'package\' class=\'w-12 h-12 text-white\'></i>'">
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-wider text-white flex items-center gap-2">FRAKTBREV <span class="bg-blue-900 text-blue-400 border border-blue-700 px-2 py-0.5 rounded-lg text-xs tracking-widest">v1.5</span></h1>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-wider text-white flex items-center gap-2">FRAKTBREV <span class="bg-blue-900 text-blue-400 border border-blue-700 px-2 py-0.5 rounded-lg text-xs tracking-widest">v1.6</span></h1>
                     <p class="text-slate-400 mt-1 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
                         Opprett og skann <span id="cloudStatus" class="inline-flex items-center gap-1 text-yellow-500 ml-2"><i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Skyen</span>
                     </p>
@@ -244,7 +255,7 @@
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
                 <div style="width: 50%;">
                     <div style="display: flex; align-items: center; gap: 4mm; margin-bottom: 3mm;">
-                        <img src="thumbnail_image001.png" style="max-height: 18mm; max-width: 45mm; object-fit: contain;" alt="Logo" onerror="this.style.display='none'">
+                        <img src="../thumbnail_image001.png" style="max-height: 18mm; max-width: 45mm; object-fit: contain;" alt="Logo" onerror="this.style.display='none'">
                         <div>
                             <h1 style="font-size: 22pt; font-weight: 900; letter-spacing: 1px; margin: 0; line-height: 1;">FRAKTBREV</h1>
                             <div style="font-size: 8pt; color: #444;">Waybill / Consignment Note</div>
@@ -388,328 +399,4 @@
         let varelinjeCount = 0;
         let db = null, auth = null;
         let gjeldendeFraktbrevData = null; 
-        const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
-        const configAppId = "fraktbrev-h-dist";
-
-        window.visMelding = function(tittel, tekst) {
-            document.getElementById('msgModalTitle').innerText = tittel;
-            document.getElementById('msgModalText').innerText = tekst;
-            document.getElementById('msgModal').classList.remove('hidden');
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('dato').valueAsDate = new Date();
-            document.getElementById('transportor').value = "Helgeland Distribusjon";
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            leggTilVarelinje(); 
-            oppdaterDatalister();
-            
-            setupPostnrOppslag('avsenderPostnr', 'avsenderSted'); 
-            setupPostnrOppslag('mottakerPostnr', 'mottakerSted');
-            setupKontaktOppslag('avsenderNavn', 'avsender'); 
-            setupKontaktOppslag('mottakerNavn', 'mottaker');
-            
-            genererUniktNummer();
-            initFirebase();
-        });
-
-        window.setupKontaktOppslag = function(inputID, type) {
-            document.getElementById(inputID).addEventListener('input', (e) => {
-                const navn = e.target.value.trim();
-                const kontakter = JSON.parse(localStorage.getItem('fb_kontakter_' + type) || '{}');
-                if (kontakter[navn]) {
-                    document.getElementById(type + 'Adresse').value = kontakter[navn].adresse || '';
-                    document.getElementById(type + 'Postnr').value = kontakter[navn].postnr || '';
-                    document.getElementById(type + 'Sted').value = kontakter[navn].sted || '';
-                    document.getElementById(type + 'Ref').value = kontakter[navn].ref || '';
-                }
-            });
-        }
-
-        async function setupPostnrOppslag(inputID, stedID) {
-            document.getElementById(inputID).addEventListener('input', async (e) => {
-                const postnr = e.target.value.trim();
-                if (postnr.length === 4 && /^\d+$/.test(postnr)) {
-                    try { const res = await fetch(`https://api.bring.com/shippingguide/api/postalCode.json?clientUrl=fraktbrev-gen&pnr=${postnr}`); const data = await res.json(); if (data.valid) document.getElementById(stedID).value = data.result; } catch (err) {}
-                }
-            });
-        }
-
-        function lagreKontaktLokalt(type, navn, adresse, postnr, sted, ref) {
-            if (!navn) return; 
-            let kontakter = JSON.parse(localStorage.getItem('fb_kontakter_' + type) || '{}');
-            kontakter[navn] = { adresse: adresse || '', postnr: postnr || '', sted: sted || '', ref: ref || '' };
-            localStorage.setItem('fb_kontakter_' + type, JSON.stringify(kontakter));
-        }
-
-        function oppdaterDatalister() {
-            ['avsender', 'mottaker'].forEach(type => {
-                const list = document.getElementById(type === 'avsender' ? 'tidligereAvsendere' : 'tidligereMottakere');
-                const kontakter = JSON.parse(localStorage.getItem('fb_kontakter_' + type) || '{}');
-                list.innerHTML = '';
-                Object.keys(kontakter).forEach(navn => {
-                    list.innerHTML += `<option value="${navn}">`;
-                });
-            });
-        }
-
-        window.toggleAnnenBetaler = function() {
-            const valgt = document.querySelector('input[name="betaler"]:checked');
-            if(!valgt) return;
-            const betaler = valgt.value;
-            const annenFelt = document.getElementById('annenBetalerTekst');
-            if (betaler === 'Annen') { annenFelt.classList.remove('hidden'); annenFelt.focus(); } 
-            else { annenFelt.classList.add('hidden'); annenFelt.value = ''; }
-        }
-
-        window.oppdaterSummering = function() {
-            let antall = 0, vekt = 0, volum = 0;
-            document.querySelectorAll('.v-antall').forEach(i => antall += Number(i.value) || 0);
-            document.querySelectorAll('.v-vekt').forEach(i => vekt += Number(i.value) || 0);
-            document.querySelectorAll('.v-volum').forEach(i => volum += Number(i.value) || 0);
-            document.getElementById('sumAntall').innerText = antall;
-            document.getElementById('sumVekt').innerText = vekt.toFixed(1);
-            document.getElementById('sumVolum').innerText = volum.toFixed(2);
-        }
-
-        window.leggTilVarelinje = function(merk = "Tørr", antall = "1", emballasje = "Stk", art = "", vekt = "", volum = "") {
-            varelinjeCount++;
-            const tbody = document.getElementById('varelinjer');
-            const tr = document.createElement('tr');
-            tr.id = `linje-${varelinjeCount}`;
-            tr.innerHTML = `
-                <td class="p-2"><select class="v-merk w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="Tørr" ${merk==='Tørr'?'selected':''}>Tørr</option><option value="Kjøl" ${merk==='Kjøl'?'selected':''}>Kjøl</option><option value="Frys" ${merk==='Frys'?'selected':''}>Frys</option></select></td>
-                <td class="p-2"><input type="number" class="v-antall w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center font-bold" value="${antall}" oninput="oppdaterSummering()"></td>
-                <td class="p-2"><input type="text" class="v-emballasje w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center" value="${emballasje}"></td>
-                <td class="p-2"><input type="text" class="v-art w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value="${art}" placeholder="Beskrivelse..."></td>
-                <td class="p-2"><input type="number" step="0.1" class="v-vekt w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center" value="${vekt}" oninput="oppdaterSummering()"></td>
-                <td class="p-2"><input type="number" step="0.01" class="v-volum w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center" value="${volum}" oninput="oppdaterSummering()"></td>
-                <td class="p-2 text-center"><button type="button" onclick="fjernVarelinje('linje-${varelinjeCount}')" class="text-red-500 hover:text-red-700 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button></td>
-            `;
-            tbody.appendChild(tr);
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            oppdaterSummering();
-        }
-
-        window.fjernVarelinje = function(id) { if (document.getElementById('varelinjer').children.length > 1) { document.getElementById(id).remove(); oppdaterSummering(); } }
-        window.genererUniktNummer = function() { document.getElementById('sendingsnr').value = Math.floor(10000000 + Math.random() * 90000000); }
-
-        window.nullstillSkjema = function() {
-            document.getElementById('fraktbrevForm').reset();
-            document.getElementById('varelinjer').innerHTML = '';
-            leggTilVarelinje();
-            document.getElementById('dato').valueAsDate = new Date();
-            document.getElementById('transportor').value = "Helgeland Distribusjon";
-            toggleAnnenBetaler();
-            genererUniktNummer();
-            gjeldendeFraktbrevData = null;
-            visMelding("Skjema tømt", "Klar for nytt fraktbrev.");
-        }
-
-        window.visForhandsvisning = function() {
-            const form = document.getElementById('fraktbrevForm');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-
-            const sendingsnr = document.getElementById('sendingsnr').value;
-            const betalerTypeElement = document.querySelector('input[name="betaler"]:checked');
-            const betalerType = betalerTypeElement ? betalerTypeElement.value : 'Sender';
-            const betalerFritekst = document.getElementById('annenBetalerTekst').value;
-
-            document.getElementById('printAvsender').innerHTML = `${document.getElementById('avsenderNavn').value}<br>${document.getElementById('avsenderAdresse').value}<br>${document.getElementById('avsenderPostnr').value} ${document.getElementById('avsenderSted').value}`;
-            document.getElementById('printAvsenderRef').innerText = document.getElementById('avsenderRef').value ? `Ref: ${document.getElementById('avsenderRef').value}` : '';
-            document.getElementById('printMottaker').innerHTML = `${document.getElementById('mottakerNavn').value}<br>${document.getElementById('mottakerAdresse').value}<br>${document.getElementById('mottakerPostnr').value} ${document.getElementById('mottakerSted').value}`;
-            document.getElementById('printMottakerRef').innerText = document.getElementById('mottakerRef').value ? `Ref/Tlf: ${document.getElementById('mottakerRef').value}` : '';
-            document.getElementById('printOrdrenr').innerText = sendingsnr;
-            
-            const d = new Date(document.getElementById('dato').value);
-            document.getElementById('printDato').innerText = isNaN(d) ? '' : `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-            
-            const tBox = document.getElementById('printTransportor');
-            const transportor = document.getElementById('transportor').value;
-            if(transportor.toLowerCase().includes("helgeland dist")) { tBox.innerHTML = `<img src="thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`; } 
-            else { tBox.innerText = transportor; }
-
-            document.getElementById('printIncoterms').innerText = document.getElementById('incoterms').value;
-            document.getElementById('printInstrukser').innerText = document.getElementById('instrukser').value;
-
-            document.getElementById('boxSenderBetaler').innerText = betalerType === 'Sender' ? 'X' : '';
-            document.getElementById('boxMottakerBetaler').innerText = betalerType === 'Mottaker' ? 'X' : '';
-            let betalerData = betalerType;
-            if (betalerType === 'Annen') { document.getElementById('boxAnnenBetaler').innerText = `Annen: ${betalerFritekst}`; betalerData = 'Annen: ' + betalerFritekst; } 
-            else { document.getElementById('boxAnnenBetaler').innerText = ''; }
-
-            const tbodyPrint = document.getElementById('printVarelinjer');
-            tbodyPrint.innerHTML = '';
-            let sumAntall = 0, sumVekt = 0, sumVolum = 0, vareData = [];
-            
-            for (let tr of document.getElementById('varelinjer').children) {
-                const m = tr.querySelector('.v-merk').value, a = tr.querySelector('.v-antall').value, emb = tr.querySelector('.v-emballasje').value, ar = tr.querySelector('.v-art').value, v = tr.querySelector('.v-vekt').value, vo = tr.querySelector('.v-volum').value;
-                vareData.push({ merk: m, antall: a, emballasje: emb, art: ar, vekt: v, volum: vo });
-                sumAntall += Number(a) || 0; sumVekt += Number(v) || 0; sumVolum += Number(vo) || 0;
-                
-                if (a || ar || v || vo) {
-                    tbodyPrint.innerHTML += `<tr>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${m}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${a}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${emb}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${ar}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v ? Number(v).toFixed(1) : ''}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${vo ? Number(vo).toFixed(2) : ''}</td>
-                    </tr>`;
-                }
-            }
-            document.getElementById('printTotalAntall').innerText = sumAntall > 0 ? sumAntall : '';
-            document.getElementById('printTotalVekt').innerText = sumVekt > 0 ? sumVekt.toFixed(1) : '';
-            document.getElementById('printTotalVolum').innerText = sumVolum > 0 ? sumVolum.toFixed(2) : '';
-
-            lagreKontaktLokalt('avsender', document.getElementById('avsenderNavn').value, document.getElementById('avsenderAdresse').value, document.getElementById('avsenderPostnr').value, document.getElementById('avsenderSted').value, document.getElementById('avsenderRef').value);
-            lagreKontaktLokalt('mottaker', document.getElementById('mottakerNavn').value, document.getElementById('mottakerAdresse').value, document.getElementById('mottakerPostnr').value, document.getElementById('mottakerSted').value, document.getElementById('mottakerRef').value);
-            oppdaterDatalister();
-
-            gjeldendeFraktbrevData = { 
-                avsender: { navn: document.getElementById('avsenderNavn').value, adresse: document.getElementById('avsenderAdresse').value, postnr: document.getElementById('avsenderPostnr').value, sted: document.getElementById('avsenderSted').value, ref: document.getElementById('avsenderRef').value }, 
-                mottaker: { navn: document.getElementById('mottakerNavn').value, adresse: document.getElementById('mottakerAdresse').value, postnr: document.getElementById('mottakerPostnr').value, sted: document.getElementById('mottakerSted').value, ref: document.getElementById('mottakerRef').value }, 
-                transportor, dato: document.getElementById('dato').value, sendingsnummer: sendingsnr, incoterms: document.getElementById('incoterms').value, 
-                instrukser: document.getElementById('instrukser').value, betaler: betalerData, varer: vareData, lagretTidspunkt: Date.now(), status: 'Registrert'
-            };
-
-            document.body.className = 'print-mode-a4';
-            document.getElementById('skjermVisning').style.display = 'none';
-            document.getElementById('utskriftsVisning').style.display = 'flex';
-
-            setTimeout(() => {
-                const barcodeSvg = document.getElementById('strekkode');
-                try { JsBarcode(barcodeSvg, sendingsnr, { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 }); barcodeSvg.style.display = 'block'; } catch(e) { barcodeSvg.style.display = 'none'; }
-            }, 100);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        window.visEtikett = function() {
-            const antallKolli = parseInt(document.getElementById('sumAntall').innerText) || 1;
-            const container = document.getElementById('etiketterContainer');
-            container.innerHTML = '';
-            
-            const avsNavn = document.getElementById('avsenderNavn').value;
-            const avsPostnr = document.getElementById('avsenderPostnr').value;
-            const avsSted = document.getElementById('avsenderSted').value;
-            const avsRef = document.getElementById('avsenderRef').value ? `Ref: ${document.getElementById('avsenderRef').value}` : '';
-            
-            const motNavn = document.getElementById('mottakerNavn').value;
-            const motAdresse = document.getElementById('mottakerAdresse').value;
-            const motPostnr = document.getElementById('mottakerPostnr').value;
-            const motSted = document.getElementById('mottakerSted').value;
-            const motRef = document.getElementById('mottakerRef').value ? `Ref/Tlf: ${document.getElementById('mottakerRef').value}` : '';
-            
-            const d = new Date(document.getElementById('dato').value);
-            const datoStr = isNaN(d) ? '' : `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-            
-            const transportor = document.getElementById('transportor').value;
-            let transHTML = transportor.toUpperCase();
-            if(transportor.toLowerCase().includes("helgeland dist")) {
-                transHTML = `<img src="thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`;
-            }
-            
-            const vektStr = document.getElementById('sumVekt').innerText;
-            const sendingsnr = document.getElementById('sendingsnr').value;
-
-            for(let i=1; i<=antallKolli; i++) {
-                const fraction = antallKolli > 1 ? `${i}/${antallKolli}` : `1/1`;
-                
-                container.innerHTML += `
-                <div class="etikett-ark">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 2mm; margin-bottom: 4mm;">
-                        <div style="font-size: 9pt;"><strong>Avsender:</strong><br><span>${avsNavn}</span><br><span>${avsPostnr} ${avsSted}</span><br><span style="font-size: 8pt; color: #444;">${avsRef}</span></div>
-                        <div style="font-size: 9pt; text-align: right;"><strong>Dato:</strong><br><span>${datoStr}</span></div>
-                    </div>
-                    
-                    <div style="border-bottom: 2px solid black; padding-bottom: 4mm; margin-bottom: 4mm; min-height: 35mm;">
-                        <div style="font-size: 9pt; margin-bottom: 2mm;"><strong>Mottaker (Consignee):</strong></div>
-                        <div style="font-size: 16pt; font-weight: 900; line-height: 1.2;">${motNavn}<br>${motAdresse}<br>${motPostnr} ${motSted}</div>
-                        <div style="font-size: 11pt; font-weight: bold; margin-top: 2mm;">${motRef}</div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 6mm;">
-                        <div><strong>Vekt total:</strong> <span>${vektStr}</span> kg</div>
-                        <div><strong>Antall:</strong> <span>${antallKolli}</span> kolli (Kolli ${fraction})</div>
-                    </div>
-                    
-                    <div style="text-align: center; border-top: 2px dashed black; border-bottom: 2px dashed black; padding: 4mm 0; margin-bottom: 10mm;">
-                        <div style="font-size: 9pt; margin-bottom: 1mm;">TRANSPORTØR</div>
-                        <div style="font-size: 15pt; font-weight: 900; display: flex; justify-content: center; align-items: center; min-height: 18mm;">${transHTML}</div>
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; position: absolute; bottom: 5mm; left: 0;">
-                        <svg id="lblStrekkode_${i}"></svg>
-                        <div style="font-size: 14pt; font-weight: bold; margin-top: 2mm;">${sendingsnr}</div>
-                    </div>
-                </div>`;
-            }
-
-            document.body.className = 'print-mode-label';
-            document.getElementById('utskriftsVisning').style.display = 'none';
-            document.getElementById('etikettVisning').style.display = 'flex';
-
-            setTimeout(() => {
-                for(let i=1; i<=antallKolli; i++) {
-                    const barcodeSvg = document.getElementById(`lblStrekkode_${i}`);
-                    try { JsBarcode(barcodeSvg, sendingsnr, { format: "CODE128", width: 3, height: 80, displayValue: false, margin: 0 }); } catch(e) {}
-                }
-            }, 100);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        window.lukkEtikett = function() { document.body.className = 'print-mode-a4'; document.getElementById('etikettVisning').style.display = 'none'; document.getElementById('utskriftsVisning').style.display = 'flex'; }
-        window.redigerFraktbrev = function() { document.body.className = ''; document.getElementById('utskriftsVisning').style.display = 'none'; document.getElementById('skjermVisning').style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
-        async function initFirebase() {
-            try {
-                if(!window.firebaseModules) { setTimeout(initFirebase, 200); return; }
-                const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.firebaseModules;
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app); auth = getAuth(app);
-                await signInAnonymously(auth);
-                
-                const s = document.getElementById('cloudStatus');
-                if(s) { s.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 text-green-400"></i> Skyen'; s.classList.remove('text-yellow-500'); s.classList.add('text-green-400'); }
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) { console.error(e); }
-        }
-
-        window.bekreftOgLagre = async function() {
-            if (!db || !gjeldendeFraktbrevData) return;
-            try {
-                const { doc, setDoc } = window.firebaseModules;
-                const docId = gjeldendeFraktbrevData.sendingsnummer.trim();
-                await setDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', docId), gjeldendeFraktbrevData);
-                visMelding("Fraktbrev lagret! ☁️", "Ligger nå trygt i skyen. Trykk OK for å skrive ut.");
-                document.getElementById('msgModal').querySelector('button').onclick = function() {
-                    document.getElementById('msgModal').classList.add('hidden');
-                    setTimeout(() => window.print(), 500);
-                };
-            } catch (e) { visMelding("Databasen nekter", e.message); }
-        }
-
-        let html5QrcodeScanner = null;
-        window.startScanner = function() {
-            document.getElementById('scannerModal').classList.remove('hidden');
-            if (html5QrcodeScanner) { html5QrcodeScanner.clear(); }
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, async (decodedText) => {
-                lukkScanner();
-                
-                const nrMatch = decodedText.match(/\b\d{8,25}\b/);
-                const idOppslag = nrMatch ? nrMatch[0] : decodedText;
-                
-                document.getElementById('sendingsnr').value = idOppslag;
-                
-                let t = ""; 
-                if(idOppslag.length === 18) t = "PostNord"; 
-                else if (idOppslag.length === 20) t = "Bring";
-                if(t) document.getElementById('transportor').value = t;
-                
-                visMelding("Strekkode Skannet", "Nummer lagt inn i ordrefeltet. Fyll ut resten og lagre.");
-            }).catch(err => { lukkScanner(); visMelding("Kamerafeil", "Tillat bruk av kamera."); });
-        }
-        window.lukkScanner = function() { if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(e=>{}); document.getElementById('scannerModal').classList.add('hidden'); }
-    </script>
-</body>
+        const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:10502865
