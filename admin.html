@@ -3,6 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- App/Fullskjerm-modus for Android & iPhone -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Dynamisk Manifest for PWA (Gjør siden installerbar som app) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const manifest = {
+                name: "Systemportal",
+                short_name: "Portal",
+                id: "hdist-systemportal-v1",
+                start_url: window.location.href.split('?')[0] + "?app=true",
+                display: "standalone",
+                background_color: "#0f172a",
+                theme_color: "#0f172a",
+                icons: [{
+                    src: new URL("thumbnail_image001.png", window.location.href).href,
+                    sizes: "192x192",
+                    type: "image/png"
+                }]
+            };
+            const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestURL;
+            document.head.appendChild(link);
+        });
+    </script>
+
     <title>Systemportal - Helgeland Distribusjon</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +66,7 @@
                 <img src="thumbnail_image001.png" alt="Helgeland Distribusjon" class="h-20 object-contain" onerror="this.outerHTML='<i data-lucide=\'box\' class=\'w-20 h-20 text-blue-600\'></i>'">
             </div>
             <h1 class="text-3xl sm:text-5xl font-black text-white tracking-widest uppercase drop-shadow-lg mb-2">Systemportal</h1>
-            <p class="text-slate-400 font-medium tracking-widest uppercase text-sm flex items-center justify-center gap-2">Hovedmeny & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest">v1.5</span></p>
+            <p class="text-slate-400 font-medium tracking-widest uppercase text-sm flex items-center justify-center gap-2">Hovedmeny & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest">v1.6</span></p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
