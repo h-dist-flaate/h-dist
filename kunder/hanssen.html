@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>H.A Hanssen Bestilling - Helgeland Distribusjon</title>
+    <title>H.A Hanssen Bestilling & Sporing - Helgeland Distribusjon</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -11,9 +11,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        window.firebaseModules = { initializeApp, getFirestore, doc, setDoc, getAuth, signInAnonymously };
+        window.firebaseModules = { initializeApp, getFirestore, doc, setDoc, collection, onSnapshot, getAuth, signInAnonymously };
     </script>
 
     <style>
@@ -26,6 +26,9 @@
         .box-title { font-size: 8pt; font-weight: bold; margin-bottom: 2mm; display: block; }
         .box-content { font-size: 10pt; line-height: 1.3; }
 
+        .timeline-line { position: absolute; left: 23px; top: 40px; bottom: 0; width: 2px; background-color: #e2e8f0; z-index: 0; }
+        .timeline-item:last-child .timeline-line { display: none; }
+
         @media print {
             @page { size: A4 portrait; margin: 0; }
             body, html { margin: 0 !important; padding: 0 !important; height: 100% !important; width: 100% !important; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -37,167 +40,223 @@
 <body class="min-h-screen">
 
     <div id="hovedInnhold" class="pb-10 flex flex-col items-center justify-start p-4 sm:p-8">
-        <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden mt-2 sm:mt-6 border border-slate-200">
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden mt-2 sm:mt-6 border border-slate-200">
             
             <!-- HEADER START -->
             <div class="bg-blue-900 p-8 sm:p-14 text-center relative overflow-hidden">
                 <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent"></div>
                 <div class="relative z-10 flex flex-col items-center justify-center">
                     
-                    <img src="../thumbnail_image001.png" alt="Helgeland Distribusjon Logo" class="h-20 sm:h-24 mx-auto mb-6 bg-white p-3 rounded-2xl shadow-xl object-contain w-auto max-w-[90%]" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-20 h-20 mx-auto text-white mb-6\'></i>'">
+                    <img src="../thumbnail_image001.png" alt="Helgeland Distribusjon Logo" class="h-16 sm:h-20 mx-auto mb-6 bg-white p-3 rounded-2xl shadow-xl object-contain w-auto max-w-[90%]" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-20 h-20 mx-auto text-white mb-6\'></i>'">
                     
                     <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-widest uppercase drop-shadow-md mb-6 flex flex-col items-center gap-2">
-                        BESTILL TRANSPORT
-                        <span class="bg-blue-800 text-blue-200 border border-blue-600 px-2 py-1 rounded-xl text-xs font-black tracking-widest shadow-inner w-fit">v1.5</span>
+                        KUNDEPORTAL
+                        <span class="bg-blue-800 text-blue-200 border border-blue-600 px-2 py-1 rounded-xl text-xs font-black tracking-widest shadow-inner w-fit">v1.6</span>
                     </h1>
                     
                     <div class="flex flex-col items-center">
                         <img src="hanssen-1.png" onerror="if (this.src.indexOf('hanssen-1.jpg') === -1) { this.src='hanssen-1.jpg'; } else if (this.src.indexOf('hanssen-1.jpeg') === -1) { this.src='hanssen-1.jpeg'; } else { this.outerHTML='<span class=\'text-2xl font-black text-red-900 tracking-widest bg-white px-6 py-2 rounded-xl border border-red-200 shadow-lg\'>H.A HANSSEN</span>'; }" alt="H.A Hanssen Logo" class="h-10 sm:h-16 object-contain bg-white px-4 py-2 rounded-xl border border-red-100 shadow-lg">
                     </div>
-
                 </div>
             </div>
             <!-- HEADER SLUTT -->
 
-            <div id="kvitteringSkjerm" class="hidden p-10 text-center flex-col items-center justify-center">
-                <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border-4 border-white">
-                    <i data-lucide="check" class="w-12 h-12 text-green-500"></i>
-                </div>
-                <h2 class="text-3xl font-black text-slate-800 mb-3">Bestilling mottatt!</h2>
-                <p class="text-slate-600 mb-8 max-w-md mx-auto">Takk for din bestilling. Fraktoppdraget ligger nå i våre systemer.</p>
-                
-                <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl inline-block shadow-sm w-full max-w-sm mx-auto mb-8">
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Ditt referansenummer</p>
-                    <p id="visSporingsnummer" class="text-4xl font-black text-blue-600 font-mono tracking-wider"></p>
-                </div>
-                
-                <div class="flex flex-col gap-4 w-full max-w-sm mx-auto">
-                    <button onclick="forberedUtskrift()" class="bg-blue-600 text-white font-black py-4 px-8 rounded-xl hover:bg-blue-500 transition-colors shadow-lg flex items-center justify-center gap-2 uppercase tracking-wide">
-                        <i data-lucide="printer" class="w-6 h-6"></i> Skriv ut Fraktbrev
-                    </button>
-                    <button onclick="location.reload()" class="bg-slate-200 text-slate-700 font-bold py-3 px-8 rounded-xl hover:bg-slate-300 transition-colors">
-                        Send ny bestilling
-                    </button>
-                </div>
-                <p class="text-xs text-slate-400 mt-6">Merk: Ved forsendelse med båt/ferge, vennligst skriv ut og fest fraktbrevet på godset.</p>
+            <!-- FANER (TABS) -->
+            <div class="flex border-b border-slate-200 bg-slate-50">
+                <button onclick="byttFane('bestill')" id="tab-bestill" class="flex-1 py-4 text-sm sm:text-base font-black uppercase tracking-wider text-blue-700 border-b-4 border-blue-600 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i> Ny Bestilling
+                </button>
+                <button onclick="byttFane('historikk')" id="tab-historikk" class="flex-1 py-4 text-sm sm:text-base font-bold uppercase tracking-wider text-slate-500 border-b-4 border-transparent hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="archive" class="w-5 h-5"></i> Mine Sendinger
+                </button>
             </div>
 
-            <form id="bestillingsSkjema" class="p-6 sm:p-10 space-y-8">
-                
-                <!-- AVSENDER -->
-                <div class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                    <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center justify-between text-slate-800">
-                        <span class="flex items-center gap-2"><i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i> Din Info (Avsender)</span>
-                        <span class="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold flex items-center gap-1 shadow-inner"><i data-lucide="lock" class="w-3 h-3"></i> Låst</span>
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Navn / Firma</label>
-                            <input type="text" id="avsNavn" value="H.A. Hanssen AS" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Gateadresse</label>
-                            <input type="text" id="avsAdresse" value="Fabrikkveien 4" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Postnummer</label>
-                            <input type="text" id="avsPostnr" value="8610" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Poststed</label>
-                            <input type="text" id="avsSted" value="Mo i Rana" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Telefon / Referanse (Valgfritt)</label>
-                            <input type="text" id="avsRef" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-white" placeholder="Evt. avdeling eller telefonnummer">
-                        </div>
+            <!-- FANE 1: BESTILLINGSSKJEMA -->
+            <div id="skjerm-bestill" class="block">
+                <div id="kvitteringSkjerm" class="hidden p-10 text-center flex-col items-center justify-center">
+                    <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border-4 border-white">
+                        <i data-lucide="check" class="w-12 h-12 text-green-500"></i>
                     </div>
-                </div>
-
-                <!-- MOTTAKER -->
-                <div class="space-y-4 pt-4">
-                    <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
-                        <i data-lucide="user" class="w-5 h-5 text-blue-600"></i> Leveringsadresse (Mottaker)
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Navn / Firma *</label>
-                            <input type="text" id="motNavn" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Mottakers navn">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Gateadresse *</label>
-                            <input type="text" id="motAdresse" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Leveringsadresse">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Postnummer *</label>
-                            <input type="text" id="motPostnr" required maxlength="4" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Postnr">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Poststed *</label>
-                            <input type="text" id="motSted" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Sted">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Telefon / Referanse *</label>
-                            <input type="text" id="motRef" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Kontaktinfo mottaker">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VARELINJER (KJØL & FRYS) -->
-                <div class="space-y-4 pt-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                    <h2 class="text-lg font-bold border-b border-slate-200 pb-2 mb-4 flex items-center justify-between text-slate-800">
-                        <span class="flex items-center gap-2"><i data-lucide="package" class="w-5 h-5 text-blue-600"></i> Godsinformasjon</span>
-                        <button type="button" onclick="leggTilVarelinje('Tørr', '', 'Kolli', 'Kjøttvarer')" class="text-sm bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors font-bold flex items-center gap-1 shadow-sm">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Legg til linje
-                        </button>
-                    </h2>
+                    <h2 class="text-3xl font-black text-slate-800 mb-3">Bestilling mottatt!</h2>
+                    <p class="text-slate-600 mb-8 max-w-md mx-auto">Takk for din bestilling. Fraktoppdraget ligger nå i våre systemer.</p>
                     
-                    <p class="text-sm text-slate-500 mb-4">Fyll ut antall og vekt på de linjene du skal sende. Tomme linjer blir automatisk ignorert.</p>
+                    <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl inline-block shadow-sm w-full max-w-sm mx-auto mb-8">
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Ditt referansenummer</p>
+                        <p id="visSporingsnummer" class="text-4xl font-black text-blue-600 font-mono tracking-wider"></p>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md mx-auto">
+                        <button onclick="forberedUtskriftNy()" class="flex-1 bg-blue-600 text-white font-black py-4 px-6 rounded-xl hover:bg-blue-500 transition-colors shadow-lg flex items-center justify-center gap-2 uppercase tracking-wide">
+                            <i data-lucide="printer" class="w-5 h-5"></i> Skriv ut
+                        </button>
+                        <button onclick="location.reload()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-4 px-6 rounded-xl hover:bg-slate-300 transition-colors">
+                            Ny ordre
+                        </button>
+                    </div>
+                </div>
 
-                    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
-                            <thead>
-                                <tr class="bg-slate-50 text-sm border-b border-slate-200">
-                                    <th class="p-3 font-bold text-slate-600 w-32">Kategori</th>
-                                    <th class="p-3 font-bold text-slate-600 w-24 text-center">Antall</th>
-                                    <th class="p-3 font-bold text-slate-600 w-32 text-center">Emballasje</th>
-                                    <th class="p-3 font-bold text-slate-600">Beskrivelse</th>
-                                    <th class="p-3 font-bold text-slate-600 w-24 text-center">Vekt (kg)</th>
-                                    <th class="p-3 font-bold text-slate-600 w-24 text-center">Volum (m³)</th>
-                                    <th class="p-3 font-bold text-center w-12"></th>
+                <form id="bestillingsSkjema" class="p-6 sm:p-10 space-y-8">
+                    <!-- AVSENDER -->
+                    <div class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center justify-between text-slate-800">
+                            <span class="flex items-center gap-2"><i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i> Din Info (Avsender)</span>
+                            <span class="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold flex items-center gap-1 shadow-inner"><i data-lucide="lock" class="w-3 h-3"></i> Låst</span>
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Navn / Firma</label>
+                                <input type="text" id="avsNavn" value="H.A. Hanssen AS" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Gateadresse</label>
+                                <input type="text" id="avsAdresse" value="Fabrikkveien 4" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Postnummer</label>
+                                <input type="text" id="avsPostnr" value="8610" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Poststed</label>
+                                <input type="text" id="avsSted" value="Mo i Rana" readonly class="w-full p-3 border border-slate-200 rounded-xl bg-slate-100/50 text-slate-500 font-bold cursor-not-allowed outline-none shadow-inner">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Telefon / Referanse (Valgfritt)</label>
+                                <input type="text" id="avsRef" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-white" placeholder="Evt. avdeling eller telefonnummer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MOTTAKER -->
+                    <div class="space-y-4 pt-4">
+                        <h2 class="text-lg font-bold border-b border-slate-200 pb-2 flex items-center gap-2 text-slate-800">
+                            <i data-lucide="user" class="w-5 h-5 text-blue-600"></i> Leveringsadresse (Mottaker)
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Navn / Firma *</label>
+                                <input type="text" id="motNavn" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Mottakers navn">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Gateadresse *</label>
+                                <input type="text" id="motAdresse" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Leveringsadresse">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Postnummer *</label>
+                                <input type="text" id="motPostnr" required maxlength="4" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Postnr">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Poststed *</label>
+                                <input type="text" id="motSted" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Sted">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Telefon / Referanse *</label>
+                                <input type="text" id="motRef" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="Kontaktinfo mottaker">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VARELINJER (KJØL & FRYS) -->
+                    <div class="space-y-4 pt-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <h2 class="text-lg font-bold border-b border-slate-200 pb-2 mb-4 flex items-center justify-between text-slate-800">
+                            <span class="flex items-center gap-2"><i data-lucide="package" class="w-5 h-5 text-blue-600"></i> Godsinformasjon</span>
+                            <button type="button" onclick="leggTilVarelinje('Tørr', '', 'Kolli', 'Kjøttvarer')" class="text-sm bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors font-bold flex items-center gap-1 shadow-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Legg til linje
+                            </button>
+                        </h2>
+                        
+                        <p class="text-sm text-slate-500 mb-4">Fyll ut antall og vekt på de linjene du skal sende. Tomme linjer blir automatisk ignorert.</p>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-slate-50 text-sm border-b border-slate-200">
+                                        <th class="p-3 font-bold text-slate-600 w-32">Kategori</th>
+                                        <th class="p-3 font-bold text-slate-600 w-24 text-center">Antall</th>
+                                        <th class="p-3 font-bold text-slate-600 w-32 text-center">Emballasje</th>
+                                        <th class="p-3 font-bold text-slate-600">Beskrivelse</th>
+                                        <th class="p-3 font-bold text-slate-600 w-24 text-center">Vekt (kg)</th>
+                                        <th class="p-3 font-bold text-slate-600 w-24 text-center">Volum (m³)</th>
+                                        <th class="p-3 font-bold text-center w-12"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="varelinjer" class="divide-y divide-slate-100"></tbody>
+                                <tfoot>
+                                    <tr class="bg-slate-50 font-black text-sm border-t border-slate-200">
+                                        <td class="p-3"></td>
+                                        <td class="p-3 text-blue-700 text-lg text-center" id="sumAntall">0</td>
+                                        <td class="p-3"></td>
+                                        <td class="p-3 text-right text-slate-600">TOTAL:</td>
+                                        <td class="p-3 text-blue-700 text-lg text-center"><span id="sumVekt">0</span></td>
+                                        <td class="p-3 text-blue-700 text-lg text-center"><span id="sumVolum">0</span></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Spesielle instrukser / Beskjed til sjåfør</label>
+                            <textarea id="instrukser" rows="2" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-white" placeholder="F.eks. Ring i forkant, portkode..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" id="btnSend" class="w-full bg-blue-600 text-white font-black text-lg py-5 px-6 rounded-xl hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition-transform active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wide">
+                            <i data-lucide="send" class="w-6 h-6"></i> Send Bestilling
+                        </button>
+                    </div>
+                    
+                    <div id="statusMelding" class="text-center text-sm text-slate-500 mt-2 font-medium flex items-center justify-center gap-2">
+                        <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Laster system...
+                    </div>
+                </form>
+            </div>
+
+            <!-- FANE 2: MINE SENDINGER (ARKIV / SPORING) -->
+            <div id="skjerm-historikk" class="hidden p-4 sm:p-8 bg-slate-50">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800">Dine oppdrag</h2>
+                        <p class="text-slate-500 text-sm">Oversikt over aktive og tidligere forsendelser.</p>
+                    </div>
+                    <div id="historikkStatus" class="flex items-center gap-2 text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                        <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Laster data...
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                                <tr>
+                                    <th class="p-4">Dato & Ordre</th>
+                                    <th class="p-4">Mottaker</th>
+                                    <th class="p-4">Vekt/Kolli</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Valg</th>
                                 </tr>
                             </thead>
-                            <tbody id="varelinjer" class="divide-y divide-slate-100"></tbody>
-                            <tfoot>
-                                <tr class="bg-slate-50 font-black text-sm border-t border-slate-200">
-                                    <td class="p-3"></td>
-                                    <td class="p-3 text-blue-700 text-lg text-center" id="sumAntall">0</td>
-                                    <td class="p-3"></td>
-                                    <td class="p-3 text-right text-slate-600">TOTAL:</td>
-                                    <td class="p-3 text-blue-700 text-lg text-center"><span id="sumVekt">0</span></td>
-                                    <td class="p-3 text-blue-700 text-lg text-center"><span id="sumVolum">0</span></td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
+                            <tbody id="kundeOrdreListe" class="divide-y divide-slate-100">
+                                <!-- Fylles av JS -->
+                            </tbody>
                         </table>
                     </div>
-                    
-                    <div class="mt-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-1">Spesielle instrukser / Beskjed til sjåfør</label>
-                        <textarea id="instrukser" rows="2" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-shadow bg-white" placeholder="F.eks. Ring i forkant, portkode..."></textarea>
-                    </div>
                 </div>
+            </div>
 
-                <div class="pt-4">
-                    <button type="submit" id="btnSend" class="w-full bg-blue-600 text-white font-black text-lg py-5 px-6 rounded-xl hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition-transform active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wide">
-                        <i data-lucide="send" class="w-6 h-6"></i> Send Bestilling
-                    </button>
-                </div>
-                
-                <div id="statusMelding" class="text-center text-sm text-slate-500 mt-2 font-medium flex items-center justify-center gap-2">
-                    <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Laster system...
-                </div>
-            </form>
+        </div>
+    </div>
+
+    <!-- SPORINGS MODAL (Tidslinje) -->
+    <div id="sporingModal" class="hidden fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-lg relative max-h-[90vh] flex flex-col">
+            <button onclick="document.getElementById('sporingModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 bg-slate-100 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 class="text-2xl font-black text-slate-800 mb-1">Sporing</h3>
+            <p id="sporingOrdreNr" class="text-slate-500 font-mono mb-6 border-b border-slate-100 pb-4"></p>
+            
+            <div id="tidslinje" class="relative overflow-y-auto custom-scrollbar flex-1 pr-2">
+                <!-- Fylles med JS -->
+            </div>
         </div>
     </div>
 
@@ -255,8 +314,8 @@
                 <div class="clean-box" style="width: 35%;">
                     <span class="box-title">5. FRAKTBETALER (FREIGHT PAYER)</span>
                     <div style="display: flex; gap: 4mm; margin-top: 1mm;">
-                        <div style="display: flex; align-items: center; gap: 1mm;"><div style="width: 4mm; height: 4mm; border: 1px solid black; text-align: center; font-size: 8pt; font-weight: bold; line-height: 4mm;" id="boxSenderBetaler">X</div><span style="font-size: 9pt;">Avsender</span></div>
-                        <div style="display: flex; align-items: center; gap: 1mm;"><div style="width: 4mm; height: 4mm; border: 1px solid black; text-align: center; font-size: 8pt; font-weight: bold; line-height: 4mm;" id="boxMottakerBetaler"></div><span style="font-size: 9pt;">Mottaker</span></div>
+                        <div style="display: flex; align-items: center; gap: 1mm;"><div style="width: 4mm; height: 4mm; border: 1px solid black; text-align: center; font-size: 8pt; font-weight: bold; line-height: 4mm;">X</div><span style="font-size: 9pt;">Avsender</span></div>
+                        <div style="display: flex; align-items: center; gap: 1mm;"><div style="width: 4mm; height: 4mm; border: 1px solid black; text-align: center; font-size: 8pt; font-weight: bold; line-height: 4mm;"></div><span style="font-size: 9pt;">Mottaker</span></div>
                     </div>
                 </div>
             </div>
@@ -304,9 +363,11 @@
                 </div>
                 <div style="width: 34%; display: flex; flex-direction: column; position: relative;">
                     <div style="height: 15mm; display: flex; align-items: flex-end; justify-content: flex-start; margin-bottom: 1mm;">
+                        <img id="printSignatureImage" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
                     <div style="border-top: 1px solid black; padding-top: 1mm;">
                         <div style="font-size: 8pt; font-weight: bold;">Signatur mottaker / Fotobevis</div>
+                        <div id="printGpsData" style="font-size: 7pt; color: #333; margin-top: 1mm; font-weight: bold;"></div>
                     </div>
                 </div>
             </div>
@@ -316,10 +377,12 @@
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
+        const KUNDE_NAVN_SØK = "Hanssen"; // Teksten systemet leter etter for å finne riktig kunde
         
         let db = null;
-        let lagretOrdre = null;
+        let lagretOrdreForNyPrint = null;
         let varelinjeCount = 0;
+        let alleKundeOrdre = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -332,7 +395,18 @@
             initFirebase();
         });
 
-        // Tabell for varelinjer
+        window.byttFane = function(faneNavn) {
+            document.getElementById('skjerm-bestill').classList.add('hidden');
+            document.getElementById('skjerm-historikk').classList.add('hidden');
+            
+            document.getElementById('tab-bestill').className = "flex-1 py-4 text-sm sm:text-base font-bold uppercase tracking-wider text-slate-500 border-b-4 border-transparent hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2";
+            document.getElementById('tab-historikk').className = "flex-1 py-4 text-sm sm:text-base font-bold uppercase tracking-wider text-slate-500 border-b-4 border-transparent hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2";
+            
+            document.getElementById('skjerm-' + faneNavn).classList.remove('hidden');
+            document.getElementById('tab-' + faneNavn).className = "flex-1 py-4 text-sm sm:text-base font-black uppercase tracking-wider text-blue-700 border-b-4 border-blue-600 transition-colors flex items-center justify-center gap-2";
+        }
+
+        // --- VARELINJER FUNKSJONER ---
         window.oppdaterSummering = function() {
             let antall = 0, vekt = 0, volum = 0;
             document.querySelectorAll('.v-antall').forEach(i => antall += Number(i.value) || 0);
@@ -386,7 +460,7 @@
         async function initFirebase() {
             try {
                 if(!window.firebaseModules) { setTimeout(initFirebase, 200); return; }
-                const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.firebaseModules;
+                const { initializeApp, getFirestore, getAuth, signInAnonymously, collection, onSnapshot } = window.firebaseModules;
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 
@@ -395,12 +469,138 @@
                 
                 const statusTekst = document.getElementById('statusMelding');
                 statusTekst.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> System klart';
+                
+                // Start lytter for kundens historikk
+                const collRef = collection(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev');
+                onSnapshot(collRef, (snapshot) => {
+                    alleKundeOrdre = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        // Filtrer slik at kunden kun ser sine egne pakker
+                        if(data.avsender && data.avsender.navn && data.avsender.navn.includes(KUNDE_NAVN_SØK)) {
+                            alleKundeOrdre.push({_id: doc.id, ...data});
+                        }
+                    });
+                    
+                    // Sorter nyeste øverst
+                    alleKundeOrdre.sort((a,b) => (b.lagretTidspunkt || 0) - (a.lagretTidspunkt || 0));
+                    tegnKundeOrdreListe();
+                });
+
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } catch(e) { 
                 document.getElementById('statusMelding').innerHTML = '<span class="text-red-500">Kunne ikke koble til server. Prøv å oppdatere siden.</span>';
             }
         }
 
+        function tegnKundeOrdreListe() {
+            const container = document.getElementById('kundeOrdreListe');
+            document.getElementById('historikkStatus').innerHTML = '<i data-lucide="check" class="w-3 h-3 text-green-500"></i> Oppdatert';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            container.innerHTML = '';
+
+            if (alleKundeOrdre.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Ingen tidligere oppdrag funnet.</td></tr>`;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                return;
+            }
+
+            alleKundeOrdre.forEach(ordre => {
+                const erLevert = !!ordre.signature || !!ordre.photoProof;
+                
+                let totVekt = 0, totAntall = 0;
+                if(ordre.varer) {
+                    ordre.varer.forEach(v => { totVekt += Number(v.vekt)||0; totAntall += Number(v.antall)||0; });
+                }
+
+                const d = ordre.lagretTidspunkt ? new Date(ordre.lagretTidspunkt) : new Date();
+                const datoStr = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+
+                let statusBadge = `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded text-xs font-bold">${ordre.status || 'Registrert'}</span>`;
+                if (erLevert) statusBadge = `<span class="bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded text-xs font-bold"><i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Levert</span>`;
+                else if (ordre.status === 'På bil') statusBadge = `<span class="bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded text-xs font-bold"><i data-lucide="truck" class="w-3 h-3 inline mr-1"></i>På Bil</span>`;
+                else if (ordre.status === 'På terminal') statusBadge = `<span class="bg-yellow-100 text-yellow-700 border border-yellow-200 px-2 py-1 rounded text-xs font-bold">På Terminal</span>`;
+
+                let handlingsKnapp = `<button onclick="visSporing('${ordre._id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg text-xs transition-colors flex items-center gap-2 ml-auto"><i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i> Spor</button>`;
+                
+                if (erLevert) {
+                    handlingsKnapp = `<button onclick="skrivUtHistoriskFraktbrev('${ordre._id}')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-lg text-xs transition-colors flex items-center gap-2 ml-auto border border-blue-200"><i data-lucide="printer" class="w-4 h-4"></i> Skriv ut (Signert)</button>`;
+                }
+
+                container.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-4 align-middle">
+                            <div class="font-black text-slate-800">${ordre.sendingsnummer || 'Ukjent'}</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-1">${datoStr}</div>
+                        </td>
+                        <td class="p-4 align-middle">
+                            <div class="font-bold text-slate-700">${ordre.mottaker?.navn || 'Ukjent'}</div>
+                            <div class="text-[10px] text-slate-500">${ordre.mottaker?.postnr || ''} ${ordre.mottaker?.sted || ''}</div>
+                        </td>
+                        <td class="p-4 align-middle text-slate-600 font-medium text-xs">
+                            ${totVekt.toFixed(1)} kg<br><span class="text-[10px] text-slate-400">${totAntall} kolli</span>
+                        </td>
+                        <td class="p-4 align-middle">${statusBadge}</td>
+                        <td class="p-4 align-middle text-right">${handlingsKnapp}</td>
+                    </tr>
+                `;
+            });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.visSporing = function(id) {
+            const ordre = alleKundeOrdre.find(o => o._id === id);
+            if(!ordre) return;
+
+            document.getElementById('sporingOrdreNr').innerText = ordre.sendingsnummer;
+            const container = document.getElementById('tidslinje');
+            container.innerHTML = '';
+
+            let historikk = ordre.historikk || [];
+            if (historikk.length === 0) {
+                historikk = [{ status: "Registrert i system", tidspunkt: ordre.lagretTidspunkt || Date.now(), utfortAv: "Kunde" }];
+            }
+
+            historikk.sort((a, b) => b.tidspunkt - a.tidspunkt);
+
+            historikk.forEach((hendelse, index) => {
+                const isLatest = index === 0;
+                const dateObj = new Date(hendelse.tidspunkt);
+                const tid = dateObj.toLocaleTimeString('no-NO', { hour: '2-digit', minute:'2-digit' });
+                const dato = dateObj.toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                
+                let iconName = "check";
+                let iconColor = isLatest ? "text-blue-600" : "text-slate-400";
+                let bgColor = isLatest ? "bg-blue-100 border-blue-300" : "bg-slate-100 border-slate-300";
+                
+                if(hendelse.status.toLowerCase().includes('levert')) { 
+                    iconName = 'check-circle'; iconColor = "text-green-600"; bgColor = "bg-green-100 border-green-300"; 
+                }
+                else if(hendelse.status.toLowerCase().includes('bil')) { iconName = 'truck'; }
+                else if(hendelse.status.toLowerCase().includes('terminal')) { iconName = 'building-2'; }
+                else if(hendelse.status.toLowerCase().includes('bestilt') || hendelse.status.toLowerCase().includes('registrert')) { iconName = 'package'; }
+
+                container.innerHTML += `
+                    <div class="timeline-item relative pl-12 pb-8 last:pb-0">
+                        <div class="timeline-line"></div>
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full ${bgColor} border-2 flex items-center justify-center z-10 shadow-sm">
+                            <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor}"></i>
+                        </div>
+                        <div class="pt-1">
+                            <p class="text-[10px] font-bold text-slate-400 mb-1">${dato} - kl ${tid}</p>
+                            <h4 class="text-base font-black text-slate-800">${hendelse.status}</h4>
+                            <p class="text-xs text-slate-500 mt-1">${hendelse.status.toLowerCase().includes('levert') ? 'Godset er signert og utlevert.' : (hendelse.rute && hendelse.rute !== '-' ? `Håndteres av rute: ${hendelse.rute}` : 'Ligger i systemet.')}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('sporingModal').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // --- SKJEMA INNSENDING ---
         document.getElementById('bestillingsSkjema').addEventListener('submit', async function(e) {
             e.preventDefault();
             if (!db) { alert("Venter på tilkobling til serveren, prøv igjen om et par sekunder."); return; }
@@ -425,7 +625,7 @@
                 if (a && v) {
                     vareData.push({ merk: m, antall: a, emballasje: emb, art: ar, vekt: v, volum: vo });
                 } else if (a || v) {
-                    formGyldig = false; // Hvis de bare har fylt ut antall men ikke vekt, etc.
+                    formGyldig = false; 
                 }
             }
             
@@ -474,7 +674,7 @@
                 const { doc, setDoc } = window.firebaseModules;
                 await setDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', ordrenummer), bestillingsData);
                 
-                lagretOrdre = bestillingsData;
+                lagretOrdreForNyPrint = bestillingsData;
                 document.getElementById('bestillingsSkjema').classList.add('hidden');
                 document.getElementById('kvitteringSkjerm').classList.remove('hidden');
                 document.getElementById('kvitteringSkjerm').classList.add('flex');
@@ -489,47 +689,71 @@
             }
         });
 
-        window.forberedUtskrift = function() {
-            if (!lagretOrdre) return;
+        // --- UTSKRIFT FOR HELT NY ORDRE ---
+        window.forberedUtskriftNy = function() {
+            if (!lagretOrdreForNyPrint) return;
+            fyllOgSkrivUtA4(lagretOrdreForNyPrint);
+        }
 
-            document.getElementById('printOrdrenr').innerText = lagretOrdre.sendingsnummer;
-            const d = new Date();
-            document.getElementById('printDato').innerText = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+        // --- UTSKRIFT FOR HISTORISK ORDRE (MED SIGNATUR) ---
+        window.skrivUtHistoriskFraktbrev = function(id) {
+            const ordre = alleKundeOrdre.find(o => o._id === id);
+            if(ordre) fyllOgSkrivUtA4(ordre);
+        }
+
+        // --- FELLES UTSKRIFTSMOTOR ---
+        function fyllOgSkrivUtA4(ordreObj) {
+            document.getElementById('printOrdrenr').innerText = ordreObj.sendingsnummer || ordreObj._id;
+            const d = ordreObj.dato ? new Date(ordreObj.dato) : new Date(ordreObj.lagretTidspunkt || Date.now());
+            document.getElementById('printDato').innerText = !isNaN(d) ? `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}` : '-';
             
-            document.getElementById('printAvsender').innerHTML = `${lagretOrdre.avsender.navn}<br>${lagretOrdre.avsender.adresse}<br>${lagretOrdre.avsender.postnr} ${lagretOrdre.avsender.sted}`;
-            document.getElementById('printAvsenderRef').innerText = lagretOrdre.avsender.ref ? `Ref/Tlf: ${lagretOrdre.avsender.ref}` : '';
+            let avs = ordreObj.avsender || {};
+            document.getElementById('printAvsender').innerHTML = `${avs.navn||''}<br>${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}`;
+            document.getElementById('printAvsenderRef').innerText = avs.ref ? `Ref/Tlf: ${avs.ref}` : '';
             
-            document.getElementById('printMottaker').innerHTML = `${lagretOrdre.mottaker.navn}<br>${lagretOrdre.mottaker.adresse}<br>${lagretOrdre.mottaker.postnr} ${lagretOrdre.mottaker.sted}`;
-            document.getElementById('printMottakerRef').innerText = lagretOrdre.mottaker.ref ? `Ref/Tlf: ${lagretOrdre.mottaker.ref}` : '';
+            let mot = ordreObj.mottaker || {};
+            document.getElementById('printMottaker').innerHTML = `${mot.navn||''}<br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}`;
+            document.getElementById('printMottakerRef').innerText = mot.ref ? `Ref/Tlf: ${mot.ref}` : '';
             
-            document.getElementById('printInstrukser').innerText = lagretOrdre.instrukser;
+            document.getElementById('printInstrukser').innerText = ordreObj.instrukser || '-';
 
             const tbodyPrint = document.getElementById('printVarelinjer');
             tbodyPrint.innerHTML = '';
             let totAntall = 0, totVekt = 0, totVolum = 0;
 
-            lagretOrdre.varer.forEach(v => {
-                totAntall += Number(v.antall) || 0; 
-                totVekt += Number(v.vekt) || 0; 
-                totVolum += Number(v.volum) || 0;
-                tbodyPrint.innerHTML += `<tr>
-                    <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.merk}</td>
-                    <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.antall}</td>
-                    <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.emballasje}</td>
-                    <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.art}</td>
-                    <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.vekt}</td>
-                    <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.volum || ''}</td>
-                </tr>`;
-            });
+            if (ordreObj.varer && ordreObj.varer.length > 0) {
+                ordreObj.varer.forEach(v => {
+                    totAntall += Number(v.antall) || 0; totVekt += Number(v.vekt) || 0; totVolum += Number(v.volum) || 0;
+                    tbodyPrint.innerHTML += `<tr>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.merk||''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.antall||''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.emballasje||''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.art||''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.vekt||''}</td>
+                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.volum||''}</td>
+                    </tr>`;
+                });
+            }
 
-            document.getElementById('printTotalAntall').innerText = totAntall;
+            document.getElementById('printTotalAntall').innerText = totAntall || '-';
             document.getElementById('printTotalVekt').innerText = totVekt > 0 ? totVekt.toFixed(1) : '-';
             document.getElementById('printTotalVolum').innerText = totVolum > 0 ? totVolum.toFixed(2) : '-';
+
+            // Signatur & Fotobevis
+            const sigImg = document.getElementById('printSignatureImage');
+            const gpsTekst = document.getElementById('printGpsData');
+            
+            if (ordreObj.signature || ordreObj.photoProof) { 
+                sigImg.src = ordreObj.signature || ordreObj.photoProof; 
+                sigImg.style.display = 'block'; 
+                if (ordreObj.gps) { gpsTekst.innerHTML = `Levert: ${ordreObj.photoProof ? 'Fotobevis' : 'Signert'} (GPS lagret)`; } 
+                else { gpsTekst.innerText = ordreObj.photoProof ? 'Fotobevis' : 'Signert elektronisk'; }
+            } else { sigImg.style.display = 'none'; gpsTekst.innerText = ''; }
 
             setTimeout(() => {
                 const barcodeSvg = document.getElementById('printStrekkode');
                 try { 
-                    JsBarcode(barcodeSvg, lagretOrdre.sendingsnummer, { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 }); 
+                    JsBarcode(barcodeSvg, String(ordreObj.sendingsnummer || ordreObj._id), { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 }); 
                     barcodeSvg.style.display = 'block'; 
                 } catch(e) { barcodeSvg.style.display = 'none'; }
                 
