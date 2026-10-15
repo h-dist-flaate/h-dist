@@ -91,7 +91,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.3</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.4</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -115,7 +115,7 @@
             <i data-lucide="check-square" class="w-4 h-4"></i> Ferdig Fakturert
         </button>
     </nav>
-
+    
     <main id="view-live" class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
         <div class="lg:col-span-1 flex flex-col gap-4 overflow-hidden">
             <div class="grid grid-cols-2 gap-4 shrink-0">
@@ -600,6 +600,11 @@
                         }
                     }
 
+                    let terminalKnapp = '';
+                    if (!erLevert && statusTekst !== 'På terminal' && statusTekst !== 'På bil' && !erAvvik) {
+                        terminalKnapp = `<button onclick="settPaaTerminal('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-yellow-400 mr-1 shadow-sm" title="Registrer inn på terminal"><i data-lucide="building" class="w-4 h-4"></i></button>`;
+                    }
+
                     const dokInfoKnapp = `<button onclick="visFraktbrevDetaljer('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-orange-400 mr-1 shadow-sm" title="Se Fraktbrev"><i data-lucide="file-text" class="w-4 h-4"></i></button>`;
                     const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-blue-400 mr-1 shadow-sm" title="Se Historikk"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
                     let bildeKnapp = '';
@@ -609,30 +614,31 @@
                     }
                     const kartKnapp = harGPS ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm" title="Vis på kart"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : '';
 
-                    const htmlString = `
-                        <div class="p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}">
-                            <div class="flex items-start gap-3">
-                                <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
-                                <div>
-                                    <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] ${erAvvik ? 'text-red-400 font-black' : 'text-slate-400 font-normal'} ml-1">${statusTekst}</span></div>
-                                    <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
-                                    ${tildelBadge}
-                                </div>
+                    const element = document.createElement('div');
+                    element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
+                    element.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
+                            <div>
+                                <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] ${erAvvik ? 'text-red-400 font-black' : 'text-slate-400 font-normal'} ml-1">${statusTekst}</span></div>
+                                <div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div>
+                                ${tildelBadge}
                             </div>
-                            <div class="text-right flex items-end">
-                                ${dokInfoKnapp}
-                                ${sporingKnapp}
-                                ${bildeKnapp}
-                                ${kartKnapp}
-                            </div>
+                        </div>
+                        <div class="text-right flex items-end">
+                            ${terminalKnapp}
+                            ${dokInfoKnapp}
+                            ${sporingKnapp}
+                            ${bildeKnapp}
+                            ${kartKnapp}
                         </div>
                     `;
                     
-                    if (erLevert) grupper.levert.push(htmlString);
-                    else if (erAvvik) grupper.avvik.push(htmlString);
-                    else if (statusTekst === 'På bil') grupper.bil.push(htmlString);
-                    else if (statusTekst === 'På terminal') grupper.terminal.push(htmlString);
-                    else grupper.ubehandlet.push(htmlString);
+                    if (erLevert) grupper.levert.push(element.outerHTML);
+                    else if (erAvvik) grupper.avvik.push(element.outerHTML);
+                    else if (statusTekst === 'På bil') grupper.bil.push(element.outerHTML);
+                    else if (statusTekst === 'På terminal') grupper.terminal.push(element.outerHTML);
+                    else grupper.ubehandlet.push(element.outerHTML);
                 }
 
                 if (harGPS) {
@@ -667,430 +673,4 @@
             listeContainer.innerHTML += formaterGruppe('Nye / Ubehandlet', 'package', 'text-slate-300', 'border-slate-700', grupper.ubehandlet);
             listeContainer.innerHTML += formaterGruppe('På Terminal', 'building', 'text-yellow-400', 'border-yellow-900/50', grupper.terminal);
             listeContainer.innerHTML += formaterGruppe('Ute på bil', 'truck', 'text-blue-400', 'border-blue-900/50', grupper.bil);
-            listeContainer.innerHTML += formaterGruppe('Levert (Klar til fakturering)', 'check-circle', 'text-green-400', 'border-green-900/50', grupper.levert);
-
-            if (listeContainer.innerHTML === '') {
-                listeContainer.innerHTML = '<div class="text-center p-8 text-slate-500 text-sm flex flex-col items-center gap-2"><i data-lucide="inbox" class="w-8 h-8 opacity-50"></i>Ingen treff.</div>';
-            }
-
-            document.getElementById('statAktive').innerText = aktiveCount;
-            document.getElementById('statLevert').innerText = levertCount;
-        }
-
-        function tegnFakturaListe(dataListe, containerId, erFerdig) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            
-            const sokFelt = erFerdig ? document.getElementById('sokeFeltArkiv').value.toLowerCase() : '';
-
-            if(dataListe.length === 0) {
-                container.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500">Ingen oppdrag i denne mappen.</td></tr>`;
-                return;
-            }
-
-            dataListe.forEach(ordre => {
-                const matchSok = erFerdig === false || (`${ordre.sendingsnummer||''} ${ordre.mottaker?.navn||''}`.toLowerCase()).includes(sokFelt);
-                if (!matchSok) return;
-
-                let totalVekt = 0;
-                if (ordre.varer) { ordre.varer.forEach(v => { totalVekt += Number(v.vekt) || 0; }); }
-
-                const dokInfoKnapp = `<button onclick="visFraktbrevDetaljer('${ordre._id}')" class="bg-slate-700 hover:bg-slate-600 text-orange-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="Se Fraktbrev"><i data-lucide="file-text" class="w-4 h-4"></i></button>`;
-                const sporingKnapp = `<button onclick="visHistorikk('${ordre._id}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="Vis sporing"><i data-lucide="clock" class="w-4 h-4"></i></button>`;
-                const dok = ordre.signature || ordre.photoProof;
-                const bildeKnapp = dok ? `<button onclick="visBilde('${dok}', ${ordre.photoProof ? 'true' : 'false'})" class="bg-slate-700 hover:bg-slate-600 text-purple-400 px-2 py-1.5 rounded-lg border border-slate-600 transition-colors" title="${ordre.photoProof ? 'Se Bilde' : 'Se Signatur'}"><i data-lucide="${ordre.photoProof ? 'camera' : 'pen-tool'}" class="w-4 h-4"></i></button>` : '';
-
-                let handlingKnapp = '';
-                if (!erFerdig) {
-                    handlingKnapp = `<button onclick="oppdaterFakturaStatus('${ordre._id}', true)" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg flex items-center gap-2 ml-auto transition-transform active:scale-95"><i data-lucide="check" class="w-4 h-4"></i> Fakturert</button>`;
-                } else {
-                    const fDato = ordre.fakturertTidspunkt ? new Date(ordre.fakturertTidspunkt).toLocaleDateString() : '';
-                    handlingKnapp = `<div class="flex items-center justify-end gap-2 text-green-400 font-bold"><i data-lucide="check-circle" class="w-4 h-4"></i> Fakturert ${fDato} <button onclick="oppdaterFakturaStatus('${ordre._id}', false)" title="Angre" class="ml-2 text-slate-500 hover:text-red-400 p-1"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div>`;
-                }
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/50 transition-colors";
-                
-                tr.innerHTML = `
-                    <td class="p-4 align-middle">
-                        <div class="font-black text-white text-sm">${ordre.sendingsnummer || 'Ukjent'}</div>
-                        <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">Status: ${ordre.status || 'Levert'}</div>
-                    </td>
-                    <td class="p-4 align-middle">
-                        <div class="font-bold text-slate-200">${ordre.mottaker?.navn || 'Ukjent'}</div>
-                        <div class="text-xs text-slate-400">${ordre.mottaker?.postnr || ''} ${ordre.mottaker?.sted || ''}</div>
-                    </td>
-                    ${!erFerdig ? `<td class="p-4 align-middle text-slate-300 font-medium">${totalVekt.toFixed(1)} kg</td>` : ''}
-                    <td class="p-4 align-middle text-center"><div class="flex items-center justify-center gap-2">${dokInfoKnapp}${sporingKnapp}${bildeKnapp}</div></td>
-                    <td class="p-4 align-middle text-right">${handlingKnapp}</td>
-                `;
-                container.appendChild(tr);
-            });
-        }
-
-        window.visFraktbrevDetaljer = function(id) {
-            const ordre = alleFraktbrev.find(o => o._id === id);
-            if(!ordre) return;
-            
-            aktivtFraktbrevForUtskrift = ordre; 
-
-            document.getElementById('fbModalOrdrenr').innerText = ordre.sendingsnummer || id;
-            
-            let avs = ordre.avsender || {};
-            document.getElementById('fbModalAvsender').innerHTML = `<strong class="text-white text-base">${avs.navn||'Ikke oppgitt'}</strong><br>${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}<br><span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref: ${avs.ref||'-'}</span>`;
-            
-            let mot = ordre.mottaker || {};
-            document.getElementById('fbModalMottaker').innerHTML = `<strong class="text-white text-base">${mot.navn||'Ikke oppgitt'}</strong><br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}<br><span class="text-slate-400 mt-2 block text-xs uppercase tracking-wider">Ref/Tlf: ${mot.ref||'-'}</span>`;
-
-            document.getElementById('fbModalInfo').innerHTML = `
-                <div><span class="text-slate-400 block text-xs uppercase mb-1">Dato</span><span class="font-medium">${ordre.dato||'-'}</span></div>
-                <div><span class="text-slate-400 block text-xs uppercase mb-1">Transportør</span><span class="font-medium">${ordre.transportor||'-'}</span></div>
-                <div><span class="text-slate-400 block text-xs uppercase mb-1">Incoterms</span><span class="font-medium">${ordre.incoterms||'-'}</span></div>
-                <div><span class="text-slate-400 block text-xs uppercase mb-1">Fraktbetaler</span><span class="font-medium">${ordre.betaler||'-'}</span></div>
-            `;
-            document.getElementById('fbModalInstrukser').innerText = ordre.instrukser || 'Ingen spesielle instrukser registrert.';
-
-            const tbody = document.getElementById('fbModalGods');
-            tbody.innerHTML = '';
-            let totVekt = 0, totVolum = 0, totAntall = 0;
-            
-            if (ordre.varer && ordre.varer.length > 0) {
-                ordre.varer.forEach(v => {
-                    totAntall += Number(v.antall) || 0; totVekt += Number(v.vekt) || 0; totVolum += Number(v.volum) || 0;
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-800 transition-colors">
-                            <td class="p-3 font-bold">${v.antall} ${v.emballasje||''}</td>
-                            <td class="p-3">${v.art||''} <span class="text-xs text-slate-500 ml-1">(${v.merk||''})</span></td>
-                            <td class="p-3 text-center text-blue-400 font-medium">${v.vekt ? v.vekt + ' kg' : '-'}</td>
-                            <td class="p-3 text-center text-blue-400 font-medium">${v.volum ? v.volum + ' m³' : '-'}</td>
-                        </tr>`;
-                });
-                tbody.innerHTML += `
-                    <tr class="bg-slate-900 border-t border-slate-700">
-                        <td class="p-3 font-black text-white text-lg">${totAntall}</td>
-                        <td class="p-3 text-right text-slate-400 font-bold text-xs uppercase tracking-wider">Total Sum:</td>
-                        <td class="p-3 text-center text-white font-black">${totVekt > 0 ? totVekt.toFixed(1) + ' kg' : '-'}</td>
-                        <td class="p-3 text-center text-white font-black">${totVolum > 0 ? totVolum.toFixed(2) + ' m³' : '-'}</td>
-                    </tr>`;
-            } else {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500"><i data-lucide="package-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>Ingen varelinjer lagret.</td></tr>`;
-            }
-
-            document.getElementById('fraktbrevModal').classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        window.skrivUtÅpnetFraktbrev = function() {
-            if(!aktivtFraktbrevForUtskrift) return;
-            const ordre = aktivtFraktbrevForUtskrift;
-
-            document.getElementById('printOrdrenr').innerText = ordre.sendingsnummer || ordre._id;
-            
-            const d = ordre.dato ? new Date(ordre.dato) : new Date(ordre.lagretTidspunkt || Date.now());
-            document.getElementById('printDato').innerText = !isNaN(d) ? `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}` : '-';
-
-            let avs = ordre.avsender || {};
-            document.getElementById('printAvsender').innerHTML = `${avs.navn||''}<br>${avs.adresse||''}<br>${avs.postnr||''} ${avs.sted||''}`;
-            document.getElementById('printAvsenderRef').innerText = avs.ref ? `Ref/Tlf: ${avs.ref}` : '';
-
-            let mot = ordre.mottaker || {};
-            document.getElementById('printMottaker').innerHTML = `${mot.navn||''}<br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}`;
-            document.getElementById('printMottakerRef').innerText = mot.ref ? `Ref/Tlf: ${mot.ref}` : '';
-
-            document.getElementById('printTransportor').innerText = ordre.transportor || 'Helgeland Distribusjon';
-            document.getElementById('printIncoterms').innerText = ordre.incoterms || '-';
-
-            document.getElementById('boxSenderBetaler').innerText = (ordre.betaler === 'Sender' || ordre.betaler === 'Avsender') ? 'X' : '';
-            document.getElementById('boxMottakerBetaler').innerText = ordre.betaler === 'Mottaker' ? 'X' : '';
-            document.getElementById('boxAnnenBetaler').innerText = (ordre.betaler && ordre.betaler !== 'Sender' && ordre.betaler !== 'Mottaker' && ordre.betaler !== 'Avsender') ? `Annen: ${ordre.betaler}` : '';
-
-            const tbody = document.getElementById('printVarelinjer');
-            tbody.innerHTML = '';
-            let totAntall = 0, totVekt = 0, totVolum = 0;
-
-            if (ordre.varer && ordre.varer.length > 0) {
-                ordre.varer.forEach(v => {
-                    totAntall += Number(v.antall) || 0; totVekt += Number(v.vekt) || 0; totVolum += Number(v.volum) || 0;
-                    tbody.innerHTML += `<tr>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.merk || ''}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.antall || ''}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.emballasje || ''}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt;">${v.art || ''}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.vekt || ''}</td>
-                        <td style="border: 1px solid black; padding: 2mm; font-size: 9pt; text-align: center;">${v.volum || ''}</td>
-                    </tr>`;
-                });
-            }
-            document.getElementById('printTotalAntall').innerText = totAntall || '-';
-            document.getElementById('printTotalVekt').innerText = totVekt ? totVekt.toFixed(1) : '-';
-            document.getElementById('printTotalVolum').innerText = totVolum ? totVolum.toFixed(2) : '-';
-
-            document.getElementById('printInstrukser').innerText = ordre.instrukser || '-';
-
-            const sigImg = document.getElementById('printSignatureImage');
-            const gpsTekst = document.getElementById('printGpsData');
-            
-            if (ordre.signature || ordre.photoProof) { 
-                sigImg.src = ordre.signature || ordre.photoProof; 
-                sigImg.style.display = 'block'; 
-                if (ordre.gps) { gpsTekst.innerHTML = `Levert: ${ordre.photoProof ? 'Fotobevis' : 'Signert'} (GPS lagret)`; } 
-                else { gpsTekst.innerText = ordre.photoProof ? 'Fotobevis' : 'Signert elektronisk'; }
-            } else { sigImg.style.display = 'none'; gpsTekst.innerText = ''; }
-
-            // Generer strekkode og skriv ut
-            setTimeout(() => {
-                const barcodeSvg = document.getElementById('printStrekkode');
-                try { 
-                    JsBarcode(barcodeSvg, String(ordre.sendingsnummer || ordre._id), { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 }); 
-                    barcodeSvg.style.display = 'block'; 
-                } catch(e) { barcodeSvg.style.display = 'none'; }
-                
-                document.body.classList.add('print-mode-a4');
-                document.getElementById('utskriftsVisning').style.display = 'block';
-                
-                // Magisk forsinkelse slik at mobilen rekker å tegne opp A4-arket før print-dialogen tar bilde!
-                setTimeout(() => {
-                    window.print();
-                }, 400);
-                
-            }, 100);
-        }
-
-        // Fjern utskriftsmodus når vinduet lukkes
-        window.onafterprint = function() {
-            if(document.body.classList.contains('print-mode-a4')) {
-                document.body.classList.remove('print-mode-a4');
-                document.getElementById('utskriftsVisning').style.display = 'none';
-            }
-        }
-        
-        window.visEtikettFraFlatesentral = function() {
-            if(!aktivtFraktbrevForUtskrift) return;
-            const ordre = aktivtFraktbrevForUtskrift;
-            
-            let antallKolli = 0;
-            let totalVekt = 0;
-            if (ordre.varer) {
-                ordre.varer.forEach(v => {
-                    antallKolli += Number(v.antall) || 0;
-                    totalVekt += Number(v.vekt) || 0;
-                });
-            }
-            if (antallKolli === 0) antallKolli = 1;
-
-            const container = document.getElementById('etiketterContainer');
-            container.innerHTML = '';
-
-            const avs = ordre.avsender || {};
-            const mot = ordre.mottaker || {};
-            const d = ordre.dato ? new Date(ordre.dato) : new Date(ordre.lagretTidspunkt || Date.now());
-            const datoStr = !isNaN(d) ? `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}` : '-';
-            const sendingsnr = ordre.sendingsnummer || ordre._id;
-            
-            const transportor = ordre.transportor || 'Helgeland Distribusjon';
-            let transHTML = transportor.toUpperCase();
-            if(transportor.toLowerCase().includes("helgeland dist")) {
-                transHTML = `<img src="../thumbnail_image001.png" style="max-height: 15mm; max-width: 100%; object-fit: contain;" alt="Helgeland Distribusjon">`;
-            }
-
-            for(let i=1; i<=antallKolli; i++) {
-                const fraction = antallKolli > 1 ? `${i}/${antallKolli}` : `1/1`;
-                container.innerHTML += `
-                <div class="etikett-ark bg-white mx-auto shadow-2xl">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 2mm; margin-bottom: 4mm;">
-                        <div style="font-size: 9pt;"><strong>Avsender:</strong><br><span>${avs.navn||''}</span><br><span>${avs.postnr||''} ${avs.sted||''}</span><br><span style="font-size: 8pt; color: #444;">${avs.ref ? 'Ref: '+avs.ref : ''}</span></div>
-                        <div style="font-size: 9pt; text-align: right;"><strong>Dato:</strong><br><span>${datoStr}</span></div>
-                    </div>
-                    <div style="border-bottom: 2px solid black; padding-bottom: 4mm; margin-bottom: 4mm; min-height: 35mm;">
-                        <div style="font-size: 9pt; margin-bottom: 2mm;"><strong>Mottaker (Consignee):</strong></div>
-                        <div style="font-size: 16pt; font-weight: 900; line-height: 1.2;">${mot.navn||''}<br>${mot.adresse||''}<br>${mot.postnr||''} ${mot.sted||''}</div>
-                        <div style="font-size: 11pt; font-weight: bold; margin-top: 2mm;">${mot.ref ? 'Ref/Tlf: '+mot.ref : ''}</div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 6mm;">
-                        <div><strong>Vekt total:</strong> <span>${totalVekt.toFixed(1)}</span> kg</div>
-                        <div><strong>Antall:</strong> <span>${antallKolli}</span> kolli (Kolli ${fraction})</div>
-                    </div>
-                    <div style="text-align: center; border-top: 2px dashed black; border-bottom: 2px dashed black; padding: 4mm 0; margin-bottom: 10mm;">
-                        <div style="font-size: 9pt; margin-bottom: 1mm;">TRANSPORTØR</div>
-                        <div style="font-size: 15pt; font-weight: 900; display: flex; justify-content: center; align-items: center; min-height: 18mm;">${transHTML}</div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; position: absolute; bottom: 5mm; left: 0;">
-                        <svg id="lblStrekkode_${i}"></svg>
-                        <div style="font-size: 14pt; font-weight: bold; margin-top: 2mm;">${sendingsnr}</div>
-                    </div>
-                </div>`;
-            }
-
-            document.getElementById('fraktbrevModal').classList.add('hidden');
-            document.getElementById('etikettVisning').classList.remove('hidden');
-            document.getElementById('etikettVisning').classList.add('flex');
-            document.body.classList.add('print-mode-label');
-
-            setTimeout(() => {
-                for(let i=1; i<=antallKolli; i++) {
-                    const barcodeSvg = document.getElementById(`lblStrekkode_${i}`);
-                    try { JsBarcode(barcodeSvg, sendingsnr, { format: "CODE128", width: 3, height: 80, displayValue: false, margin: 0 }); } catch(e) {}
-                }
-            }, 100);
-        }
-
-        window.lukkEtikettPreview = function() {
-            document.body.classList.remove('print-mode-label');
-            document.getElementById('etikettVisning').classList.add('hidden');
-            document.getElementById('etikettVisning').classList.remove('flex');
-            document.getElementById('fraktbrevModal').classList.remove('hidden');
-        }
-
-        window.visHistorikk = function(id) {
-            const ordre = alleFraktbrev.find(o => o._id === id);
-            if(!ordre) return;
-            
-            document.getElementById('historikkOrdrenr').innerText = 'Ordre: ' + (ordre.sendingsnummer || id);
-            const container = document.getElementById('historikkListe');
-            container.innerHTML = '';
-
-            if (!ordre.historikk || ordre.historikk.length === 0) {
-                container.innerHTML = '<div class="text-slate-400 text-sm text-center p-8 flex flex-col items-center gap-2"><i data-lucide="info" class="w-8 h-8 opacity-50"></i> Ingen sporingshistorikk funnet.</div>';
-            } else {
-                const historikkSortert = [...ordre.historikk].sort((a,b) => b.tidspunkt - a.tidspunkt);
-                historikkSortert.forEach(hendelse => {
-                    const dato = new Date(hendelse.tidspunkt).toLocaleString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    let ikon = "check-circle", farge = "text-slate-400";
-                    if(hendelse.status.includes('bil')) { ikon = 'truck'; farge = 'text-blue-400'; }
-                    if(hendelse.status.includes('terminal')) { ikon = 'building'; farge = 'text-yellow-400'; }
-                    if(hendelse.status.includes('Levert')) { ikon = 'check'; farge = 'text-green-400'; }
-
-                    container.innerHTML += `
-                        <div class="relative pl-8 border-l-2 border-slate-600 pb-5 last:border-0 last:pb-0 ml-3">
-                            <div class="absolute -left-[13px] top-0 bg-slate-800 p-1 rounded-full border-2 border-slate-600 shadow-md">
-                                <i data-lucide="${ikon}" class="w-4 h-4 ${farge}"></i>
-                            </div>
-                            <div class="text-xs text-slate-400 font-bold mb-1">${dato}</div>
-                            <div class="text-white font-bold text-base tracking-wide">${hendelse.status}</div>
-                            <div class="text-xs text-slate-400 mt-1 uppercase tracking-widest"><span class="text-slate-500">Av:</span> ${hendelse.rute || 'Ukjent'} <span class="lowercase text-slate-600 ml-1">(${hendelse.utfortAv || 'System'})</span></div>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('historikkModal').classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        window.oppdaterFakturaStatus = async function(id, status) {
-            if(!db || !id) return;
-            const { doc, updateDoc } = window.firebaseModules;
-            try { await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', id), { fakturert: status, fakturertTidspunkt: status ? Date.now() : null }); } 
-            catch (e) { alert("Kunne ikke oppdatere: " + e.message); }
-        }
-
-        window.kartFokus = function(lat, lng) { byttFane('live'); map.setView([lat, lng], 15); }
-        window.filtrerListe = function() { fordelDataTilSkjermer(); }
-        window.filtrerArkiv = function() { fordelDataTilSkjermer(); }
-
-        window.visBilde = function(b64, isPhoto) {
-            document.getElementById('visningBilde').src = b64;
-            document.getElementById('bildeModalTittel').innerText = isPhoto ? "Fotobevis for levering" : "Kundens Signatur";
-            document.getElementById('bildeModalTekst').innerText = isPhoto ? "Sjåfør valgte levering uten signatur." : "Signert for mottak på mobil.";
-            
-            if(!isPhoto) { 
-                document.getElementById('visningBilde').classList.add('bg-slate-500'); 
-                document.getElementById('visningBilde').classList.remove('bg-white'); 
-            } else { 
-                document.getElementById('visningBilde').classList.remove('bg-white', 'bg-slate-500'); 
-            }
-            
-            document.getElementById('bildeModal').classList.remove('hidden');
-        }
-
-        window.apneTildelModal = function(id, currentAssigned) {
-            valgtTildelId = id;
-            document.getElementById('tildelOrdreNr').innerText = id;
-            document.getElementById('tildelInput').value = currentAssigned || '';
-            document.getElementById('tildelModal').classList.remove('hidden');
-        }
-        window.lukkTildelModal = () => document.getElementById('tildelModal').classList.add('hidden');
-
-        window.lagreTildeling = async function() {
-            if(!db || !valgtTildelId) return;
-            const ruteInput = document.getElementById('tildelInput').value;
-            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
-            try { 
-                const hendelse = { status: 'Tildelt Rute', tidspunkt: Date.now(), rute: ruteInput, utfortAv: 'Flåtesentral' };
-                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: ruteInput, historikk: arrayUnion(hendelse) }); 
-                lukkTildelModal(); 
-            } catch (e) { alert(e.message); }
-        }
-        
-        window.fjernTildeling = async function() {
-            if(!db || !valgtTildelId) return;
-            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
-            try { 
-                const hendelse = { status: 'Fjernet fra Rute', tidspunkt: Date.now(), rute: '-', utfortAv: 'Flåtesentral' };
-                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', valgtTildelId), { assignedTo: null, historikk: arrayUnion(hendelse) }); 
-                lukkTildelModal(); 
-            } catch (e) { alert(e.message); }
-        }
-
-        // --- REDIGERING AV FRAKTBREV ---
-        window.apneRedigerModal = function() {
-            if(!aktivtFraktbrevForUtskrift) return;
-            const o = aktivtFraktbrevForUtskrift;
-            
-            document.getElementById('redAvsNavn').value = o.avsender?.navn || '';
-            document.getElementById('redAvsAdresse').value = o.avsender?.adresse || '';
-            document.getElementById('redAvsPostnr').value = o.avsender?.postnr || '';
-            document.getElementById('redAvsSted').value = o.avsender?.sted || '';
-            
-            document.getElementById('redMotNavn').value = o.mottaker?.navn || '';
-            document.getElementById('redMotAdresse').value = o.mottaker?.adresse || '';
-            document.getElementById('redMotPostnr').value = o.mottaker?.postnr || '';
-            document.getElementById('redMotSted').value = o.mottaker?.sted || '';
-            
-            document.getElementById('redInstrukser').value = o.instrukser || '';
-            
-            document.getElementById('fraktbrevModal').classList.add('hidden');
-            document.getElementById('redigerModal').classList.remove('hidden');
-        }
-
-        window.lukkRedigerModal = function() {
-            document.getElementById('redigerModal').classList.add('hidden');
-            document.getElementById('fraktbrevModal').classList.remove('hidden');
-        }
-
-        window.lagreRedigering = async function() {
-            if(!db || !aktivtFraktbrevForUtskrift) return;
-            const btn = document.getElementById('btnLagreRedigering');
-            const origHtml = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Lagrer...';
-            btn.disabled = true;
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-
-            const id = aktivtFraktbrevForUtskrift._id;
-            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
-            
-            const oppdatertData = {
-                "avsender.navn": document.getElementById('redAvsNavn').value,
-                "avsender.adresse": document.getElementById('redAvsAdresse').value,
-                "avsender.postnr": document.getElementById('redAvsPostnr').value,
-                "avsender.sted": document.getElementById('redAvsSted').value,
-                "mottaker.navn": document.getElementById('redMotNavn').value,
-                "mottaker.adresse": document.getElementById('redMotAdresse').value,
-                "mottaker.postnr": document.getElementById('redMotPostnr').value,
-                "mottaker.sted": document.getElementById('redMotSted').value,
-                "instrukser": document.getElementById('redInstrukser').value,
-                historikk: arrayUnion({ status: 'Oppdatert av admin', tidspunkt: Date.now(), rute: '-', utfortAv: 'Flåtesentral' })
-            };
-            
-            try {
-                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', id), oppdatertData);
-                lukkRedigerModal();
-            } catch(e) {
-                alert("Kunne ikke lagre: " + e.message);
-            } finally {
-                btn.innerHTML = origHtml;
-                btn.disabled = false;
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        }
-    </script>
-</body>
+            listeContainer.innerHTML += formaterGruppe('Levert (Klar til fakturering)', 'check-circle', 'text-green-400
