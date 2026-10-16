@@ -92,7 +92,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v2.9</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.0</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -208,10 +208,12 @@
                 <option value="Nesna">1. Nesna</option>
                 <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
                 <option value="Lovund">3. Lovund</option>
-                <option value="Mo">4. Mo</option>
-                <option value="Sandnessjøen">5. Sandnessjøen</option>
-                <option value="Mosjøen">6. Mosjøen</option>
-                <option value="Hattfjelldal">7. Hattfjelldal</option>
+                <!-- Nye ruter lagt til her! -->
+                <option value="Mo. 1">4. Mo. 1</option>
+                <option value="Mo. 2">5. Mo. 2</option>
+                <option value="Sandnessjøen">6. Sandnessjøen</option>
+                <option value="Mosjøen">7. Mosjøen</option>
+                <option value="Hattfjelldal">8. Hattfjelldal</option>
             </select>
             <div class="flex gap-2">
                 <button onclick="fjernTildeling()" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Fjern</button>
@@ -343,7 +345,7 @@
         </div>
     </div>
 
-    <!-- UTKSRIFTSVISNING A4 -->
+    <!-- UTKSRIFTSVISNING A4 (GJEMT FREM TIL DU TRYKKER PÅ SKRIV UT) -->
     <div id="utskriftsVisning">
         <div class="a4-ark mx-auto">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
@@ -915,6 +917,7 @@
                 } catch(e) { barcodeSvg.style.display = 'none'; }
                 
                 document.body.classList.add('print-mode-a4');
+                document.getElementById('utskriftsVisning').style.display = 'block';
                 
                 // Magisk forsinkelse slik at nettleseren rekker å tegne opp A4-arket før print-dialogen tar bilde!
                 Array.from(document.body.children).forEach(child => {
@@ -934,6 +937,7 @@
         window.onafterprint = function() {
             if(document.body.classList.contains('print-mode-a4')) {
                 document.body.classList.remove('print-mode-a4');
+                document.getElementById('utskriftsVisning').style.display = 'none';
             }
             if(document.body.classList.contains('print-mode-label')) {
                 document.body.classList.remove('print-mode-label');
