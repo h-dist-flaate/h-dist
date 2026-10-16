@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- App/Fullskjerm-modus for Android & iPhone -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
+    <!-- Denne manifest-koden tryller nettsiden om til en Android-app som fjerner adresselinjen! -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Sj%C3%A5f%C3%B8rterminal%22%2C%22short_name%22%3A%22Sj%C3%A5f%C3%B8r%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22thumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
     
     <title>Sjåførterminal v2.3</title>
@@ -104,6 +106,12 @@
                     <div id="infoMottakerNavn" class="text-lg font-bold text-white"></div>
                     <div id="infoMottakerAdresse" class="text-slate-300 text-sm"></div>
                     <div id="infoMottakerSted" class="text-slate-300 text-sm font-medium"></div>
+                    
+                    <div id="infoMottakerRefBox" class="mt-3 hidden">
+                        <a id="infoMottakerRefLink" href="#" class="inline-flex items-center gap-2 bg-blue-900/40 text-blue-300 border border-blue-700/50 hover:bg-blue-800/50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors shadow-sm">
+                            <i data-lucide="phone" class="w-4 h-4"></i> <span id="infoMottakerRefTekst"></span>
+                        </a>
+                    </div>
                 </div>
                 <div class="border-t border-slate-700 pt-4 grid grid-cols-2 gap-4">
                     <div>
@@ -111,10 +119,16 @@
                         <div id="infoAvsenderNavn" class="text-sm font-bold text-white"></div>
                         <div id="infoAvsenderAdresse" class="text-slate-300 text-sm"></div>
                         <div id="infoAvsenderSted" class="text-slate-300 text-sm font-medium"></div>
+                        
+                        <div id="infoAvsenderRefBox" class="mt-2 hidden">
+                            <a id="infoAvsenderRefLink" href="#" class="inline-flex items-center gap-1.5 bg-slate-700/50 text-blue-300 border border-slate-600 hover:bg-slate-700 px-2 py-1 rounded-md text-xs font-bold transition-colors shadow-sm">
+                                <i data-lucide="phone" class="w-3 h-3"></i> <span id="infoAvsenderRefTekst"></span>
+                            </a>
+                        </div>
                     </div>
                     <div>
-                        <div class="text-xs text-slate-400 font-bold uppercase mb-1">Antall / Vekt</div>
-                        <div class="text-sm font-medium text-slate-200"><span id="infoAntall" class="font-bold text-blue-400"></span> stk / <span id="infoVekt"></span> kg</div>
+                        <div class="text-xs text-slate-400 font-bold uppercase mb-1">Vekt / Volum</div>
+                        <div class="text-sm font-medium text-slate-200"><span id="infoVekt"></span> kg</div>
                     </div>
                 </div>
             </div>
@@ -129,7 +143,6 @@
             </button>
         </div>
         
-        <!-- NY KNAPP FOR AVVIK -->
         <button onclick="apneAvvikModal()" class="w-full bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50 py-3 rounded-xl font-bold flex items-center justify-center gap-2 mb-4 transition-colors">
             <i data-lucide="alert-triangle" class="w-5 h-5"></i> REGISTRER AVVIK / FEIL
         </button>
@@ -172,17 +185,19 @@
                 <option value="Nesna">1. Nesna</option>
                 <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
                 <option value="Lovund">3. Lovund</option>
-                <option value="Mo">4. Mo</option>
-                <option value="Sandnessjøen">5. Sandnessjøen</option>
-                <option value="Mosjøen">6. Mosjøen</option>
-                <option value="Hattfjelldal">7. Hattfjelldal</option>
+                <!-- Nye Ruter lagt til her! -->
+                <option value="Mo. 1">4. Mo. 1</option>
+                <option value="Mo. 2">5. Mo. 2</option>
+                <option value="Sandnessjøen">6. Sandnessjøen</option>
+                <option value="Mosjøen">7. Mosjøen</option>
+                <option value="Hattfjelldal">8. Hattfjelldal</option>
             </select>
             <button onclick="lagreBilValg()" class="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold w-full shadow-lg uppercase tracking-wider">Start Rute</button>
         </div>
     </div>
 
     <!-- Scanner Modal -->
-    <div id="scannerModal" class="hidden fixed inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-[90] p-4 backdrop-blur-sm">
+    <div id="scannerModal" class="hidden fixed inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-[90] p-4 no-print backdrop-blur-sm">
         <div class="w-full max-w-lg bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700">
             <button type="button" onclick="lukkScanner()" class="absolute top-4 right-4 bg-slate-800 hover:bg-red-500 text-white rounded-full p-2 z-10 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div class="p-6 bg-slate-800 border-b border-slate-700 text-center">
@@ -420,9 +435,29 @@
             document.getElementById('infoMottakerAdresse').innerText = data.mottaker?.adresse || '';
             document.getElementById('infoMottakerSted').innerText = `${data.mottaker?.postnr || ''} ${data.mottaker?.sted || ''}`;
             
+            const motRef = data.mottaker?.ref || '';
+            if (motRef) {
+                document.getElementById('infoMottakerRefBox').classList.remove('hidden');
+                document.getElementById('infoMottakerRefTekst').innerText = motRef;
+                const phoneFormat = motRef.replace(/[^\d+]/g, '');
+                document.getElementById('infoMottakerRefLink').href = phoneFormat ? `tel:${phoneFormat}` : '#';
+            } else {
+                document.getElementById('infoMottakerRefBox').classList.add('hidden');
+            }
+
             document.getElementById('infoAvsenderNavn').innerText = data.avsender?.navn || 'Ukjent';
             document.getElementById('infoAvsenderAdresse').innerText = data.avsender?.adresse || '';
             document.getElementById('infoAvsenderSted').innerText = `${data.avsender?.postnr || ''} ${data.avsender?.sted || ''}`;
+            
+            const avsRef = data.avsender?.ref || '';
+            if (avsRef) {
+                document.getElementById('infoAvsenderRefBox').classList.remove('hidden');
+                document.getElementById('infoAvsenderRefTekst').innerText = avsRef;
+                const phoneFormat = avsRef.replace(/[^\d+]/g, '');
+                document.getElementById('infoAvsenderRefLink').href = phoneFormat ? `tel:${phoneFormat}` : '#';
+            } else {
+                document.getElementById('infoAvsenderRefBox').classList.add('hidden');
+            }
             
             let totalVekt = 0, totalAntall = 0;
             if (data.varer) { 
@@ -431,7 +466,6 @@
                     totalAntall += Number(v.antall) || 0;
                 }); 
             }
-            document.getElementById('infoAntall').innerText = totalAntall;
             document.getElementById('infoVekt').innerText = totalVekt > 0 ? totalVekt.toFixed(1) : '-';
 
             document.getElementById('hovedskjerm').classList.add('hidden');
