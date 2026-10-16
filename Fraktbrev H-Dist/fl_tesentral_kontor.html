@@ -19,6 +19,7 @@
     </script>
 
     <style>
+        /* STREAMING_CHUNK:Importerer fonter og grunnleggende stil... */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
         #map { height: 100%; min-height: 400px; width: 100%; border-radius: 0.75rem; z-index: 1; }
@@ -41,7 +42,7 @@
         .etikett-ark { background-color: white; width: 102mm; height: 192mm; box-sizing: border-box; padding: 5mm; color: black; font-family: Arial, sans-serif; position: relative; page-break-after: always; margin-bottom: 20px;}
         .etikett-ark:last-child { page-break-after: auto; margin-bottom: 0; }
 
-        /* Utskrifts-stiler (PC FIX) */
+        /* STREAMING_CHUNK:Utskrifts-stiler... */
         @media print {
             @page { margin: 0; }
             body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; height: auto !important;}
@@ -81,6 +82,7 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Bygger header og menyer... -->
     <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
         <div class="flex items-center gap-4">
@@ -92,7 +94,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.0</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.1</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -146,6 +148,7 @@
         </div>
     </main>
 
+    <!-- STREAMING_CHUNK:Laster inn Modaler for Arkiv og Tildeling... -->
     <main id="view-faktura" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -171,6 +174,7 @@
             </div>
         </div>
     </main>
+
     <main id="view-ferdig" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -208,7 +212,6 @@
                 <option value="Nesna">1. Nesna</option>
                 <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
                 <option value="Lovund">3. Lovund</option>
-                <!-- Nye ruter lagt til her! -->
                 <option value="Mo. 1">4. Mo. 1</option>
                 <option value="Mo. 2">5. Mo. 2</option>
                 <option value="Sandnessjøen">6. Sandnessjøen</option>
@@ -242,6 +245,7 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Laster inn Fraktbrev Visning (For admin og utskrift)... -->
     <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
             <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -293,14 +297,17 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Laster inn NY Redigeringsmodal MED Varelinjer... -->
     <!-- REDIGER MODAL -->
     <div id="redigerModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[160] p-4 backdrop-blur-sm overflow-y-auto">
-        <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col my-auto">
-            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-xl">
+        <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-4xl border border-slate-700 relative flex flex-col my-auto max-h-[90vh]">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-xl shrink-0">
                 <h3 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="edit" class="text-blue-400 w-5 h-5"></i> Rediger Fraktbrev</h3>
                 <button onclick="lukkRedigerModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-800">
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-800 overflow-y-auto custom-scrollbar flex-1">
+                
+                <!-- Adresser -->
                 <div class="space-y-3 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
                     <h4 class="text-xs text-slate-400 font-bold uppercase flex items-center gap-2 mb-2"><i data-lucide="building-2" class="w-4 h-4"></i> Avsender</h4>
                     <input id="redAvsNavn" class="w-full bg-slate-950 border border-slate-600 text-white p-2.5 rounded-lg focus:border-blue-500 outline-none text-sm" placeholder="Navn / Firma">
@@ -310,6 +317,7 @@
                         <input id="redAvsSted" class="w-2/3 bg-slate-950 border border-slate-600 text-white p-2.5 rounded-lg focus:border-blue-500 outline-none text-sm" placeholder="Sted">
                     </div>
                 </div>
+                
                 <div class="space-y-3 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
                     <h4 class="text-xs text-slate-400 font-bold uppercase flex items-center gap-2 mb-2"><i data-lucide="user" class="w-4 h-4"></i> Mottaker</h4>
                     <input id="redMotNavn" class="w-full bg-slate-950 border border-slate-600 text-white p-2.5 rounded-lg focus:border-blue-500 outline-none text-sm" placeholder="Navn / Firma">
@@ -319,12 +327,26 @@
                         <input id="redMotSted" class="w-2/3 bg-slate-950 border border-slate-600 text-white p-2.5 rounded-lg focus:border-blue-500 outline-none text-sm" placeholder="Sted">
                     </div>
                 </div>
-                <div class="md:col-span-2">
+
+                <!-- Instrukser -->
+                <div class="md:col-span-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
                     <h4 class="text-xs text-slate-400 font-bold uppercase mb-2">Instrukser til sjåfør</h4>
-                    <textarea id="redInstrukser" class="w-full bg-slate-950 border border-slate-600 text-white p-3 rounded-lg focus:border-blue-500 outline-none text-sm" rows="3" placeholder="F.eks. ring før levering..."></textarea>
+                    <textarea id="redInstrukser" class="w-full bg-slate-950 border border-slate-600 text-white p-3 rounded-lg focus:border-blue-500 outline-none text-sm" rows="2" placeholder="F.eks. ring før levering..."></textarea>
                 </div>
+
+                <!-- NY VARELINJE REDIGERING -->
+                <div class="md:col-span-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <h4 class="text-xs text-slate-400 font-bold uppercase mb-2 flex items-center gap-2"><i data-lucide="package" class="w-4 h-4"></i> Godsinformasjon (Varelinjer)</h4>
+                    <div id="redigerVarerContainer" class="space-y-2">
+                        <!-- Dynamisk fylt via JS -->
+                    </div>
+                    <button onclick="redigerLeggTilVarelinje()" class="mt-3 text-sm bg-slate-800 hover:bg-slate-700 text-blue-400 px-4 py-2 rounded-lg border border-slate-700 transition-colors font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Legg til ny varelinje
+                    </button>
+                </div>
+
             </div>
-            <div class="p-4 border-t border-slate-700 flex justify-end gap-3 bg-slate-900 rounded-b-xl">
+            <div class="p-4 border-t border-slate-700 flex justify-end gap-3 bg-slate-900 rounded-b-xl shrink-0">
                 <button onclick="lukkRedigerModal()" class="bg-slate-700 text-white hover:bg-slate-600 px-5 py-2.5 rounded-lg font-bold transition-colors">Avbryt</button>
                 <button onclick="lagreRedigering()" id="btnLagreRedigering" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-transform active:scale-95"><i data-lucide="save" class="w-4 h-4"></i> Lagre Endringer</button>
             </div>
@@ -345,6 +367,7 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Gjør klar HTML for det usynlige A4-arket... -->
     <!-- UTKSRIFTSVISNING A4 (GJEMT FREM TIL DU TRYKKER PÅ SKRIV UT) -->
     <div id="utskriftsVisning">
         <div class="a4-ark mx-auto">
@@ -459,6 +482,7 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Laster inn Javascript og databasefunksjoner... -->
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -495,9 +519,7 @@
             if (input === ADMIN_PASSORD.toLowerCase()) {
                 try {
                     localStorage.setItem('flate_admin_auth', 'true');
-                } catch(err) {
-                    console.warn("Lokal lagring er blokkert (ofte tilfelle i forhåndsvisning), men vi logger deg inn for denne økten.");
-                }
+                } catch(err) {}
                 lukkOppSystem();
             } else {
                 document.getElementById('feilPassordMsg').classList.remove('hidden');
@@ -1143,7 +1165,7 @@
             } catch (e) { alert("Kunne ikke oppdatere: " + e.message); }
         }
 
-        // --- REDIGERING AV FRAKTBREV ---
+        // --- STREAMING_CHUNK:Lager den nye redigeringslogikken med varelinjer... ---
         window.apneRedigerModal = function() {
             if(!aktivtFraktbrevForUtskrift) return;
             const o = aktivtFraktbrevForUtskrift;
@@ -1160,8 +1182,56 @@
             
             document.getElementById('redInstrukser').value = o.instrukser || '';
             
+            const varerContainer = document.getElementById('redigerVarerContainer');
+            varerContainer.innerHTML = '';
+            redigerVareTeller = 0;
+            
+            if (o.varer && o.varer.length > 0) {
+                o.varer.forEach((v) => redigerLeggTilVarelinje(v));
+            } else {
+                redigerLeggTilVarelinje(); 
+            }
+            
             document.getElementById('fraktbrevModal').classList.add('hidden');
             document.getElementById('redigerModal').classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        let redigerVareTeller = 0;
+        window.redigerLeggTilVarelinje = function(v = {}) {
+            redigerVareTeller++;
+            const id = `redVare-${redigerVareTeller}`;
+            const html = `
+                <div id="${id}" class="red-vare-rad flex flex-wrap gap-2 items-end bg-slate-950 p-2 rounded-lg border border-slate-800 relative">
+                    <div class="flex-1 min-w-[80px]">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Merk</label>
+                        <input type="text" class="rv-merk w-full bg-slate-900 border border-slate-600 text-white p-2 rounded focus:border-blue-500 outline-none text-xs" value="${v.merk || ''}">
+                    </div>
+                    <div class="w-16">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Ant</label>
+                        <input type="number" class="rv-antall w-full bg-slate-900 border border-slate-600 text-white p-2 rounded focus:border-blue-500 outline-none text-xs text-center font-bold" value="${v.antall || ''}">
+                    </div>
+                    <div class="flex-1 min-w-[80px]">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Emb</label>
+                        <input type="text" class="rv-emb w-full bg-slate-900 border border-slate-600 text-white p-2 rounded focus:border-blue-500 outline-none text-xs" value="${v.emballasje || ''}">
+                    </div>
+                    <div class="flex-[2] min-w-[120px]">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Beskrivelse</label>
+                        <input type="text" class="rv-art w-full bg-slate-900 border border-slate-600 text-white p-2 rounded focus:border-blue-500 outline-none text-xs" value="${v.art || ''}">
+                    </div>
+                    <div class="w-20">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Vekt</label>
+                        <input type="number" step="0.1" class="rv-vekt w-full bg-slate-900 border border-slate-600 text-white p-2 rounded focus:border-blue-500 outline-none text-xs text-center" value="${v.vekt || ''}">
+                    </div>
+                    <div class="w-20">
+                        <label class="text-[10px] text-slate-500 uppercase font-bold">Volum</label>
+                        <input type="number" step="0.01" class="rv-volum w-full bg-slate-900 border border-slate-600 text-white p-2 rounded focus:border-blue-500 outline-none text-xs text-center" value="${v.volum || ''}">
+                    </div>
+                    <button type="button" onclick="document.getElementById('${id}').remove()" class="text-slate-500 hover:text-red-400 p-2 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `;
+            document.getElementById('redigerVarerContainer').insertAdjacentHTML('beforeend', html);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         window.lukkRedigerModal = function() {
@@ -1180,6 +1250,26 @@
             const id = aktivtFraktbrevForUtskrift._id;
             const { doc, updateDoc, arrayUnion } = window.firebaseModules;
             
+            // Samler alle varelinjene fra skjemaet
+            const oppdaterteVarer = [];
+            document.querySelectorAll('.red-vare-rad').forEach(rad => {
+                const a = rad.querySelector('.rv-antall').value;
+                const v = rad.querySelector('.rv-vekt').value;
+                const ar = rad.querySelector('.rv-art').value;
+                
+                // Lagrer kun raden hvis den har antall eller vekt eller beskrivelse
+                if(a || v || ar) {
+                    oppdaterteVarer.push({
+                        merk: rad.querySelector('.rv-merk').value,
+                        antall: a,
+                        emballasje: rad.querySelector('.rv-emb').value,
+                        art: ar,
+                        vekt: v,
+                        volum: rad.querySelector('.rv-volum').value
+                    });
+                }
+            });
+            
             const oppdatertData = {
                 "avsender.navn": document.getElementById('redAvsNavn').value,
                 "avsender.adresse": document.getElementById('redAvsAdresse').value,
@@ -1190,12 +1280,15 @@
                 "mottaker.postnr": document.getElementById('redMotPostnr').value,
                 "mottaker.sted": document.getElementById('redMotSted').value,
                 "instrukser": document.getElementById('redInstrukser').value,
+                "varer": oppdaterteVarer,
                 historikk: arrayUnion({ status: 'Oppdatert av admin', tidspunkt: Date.now(), rute: '-', utfortAv: 'Flåtesentral' })
             };
             
             try {
                 await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', id), oppdatertData);
                 lukkRedigerModal();
+                // Lukker også selve visningsmodalen for å tvinge frem en oppfriskning
+                document.getElementById('fraktbrevModal').classList.add('hidden');
             } catch(e) {
                 alert("Kunne ikke lagre: " + e.message);
             } finally {
