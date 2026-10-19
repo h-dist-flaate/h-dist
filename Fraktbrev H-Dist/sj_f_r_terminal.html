@@ -3,16 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- App/Fullskjerm-modus for Android & iPhone -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
-    <!-- Denne manifest-koden tryller nettsiden om til en Android-app som fjerner adresselinjen! -->
-    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Sj%C3%A5f%C3%B8rterminal%22%2C%22short_name%22%3A%22Sj%C3%A5f%C3%B8r%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22thumbnail_image001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
-    
-    <title>Sjåførterminal v2.3</title>
+    <title>Sjåførterminal v2.4</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -26,6 +17,7 @@
     </script>
 
     <style>
+        /* STREAMING_CHUNK:Importerer fonter og grunnleggende stil... */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overscroll-behavior-y: contain; }
         #signaturePad { border: 2px dashed #475569; border-radius: 0.75rem; cursor: crosshair; touch-action: none; background: #f8fafc; }
@@ -36,15 +28,16 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
+    <!-- STREAMING_CHUNK:Bygger header og rute-overskrift... -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg shrink-0 z-10">
         <div class="flex items-center gap-3">
             <div class="bg-slate-800 p-2 rounded-lg shadow-blue-900/50 shadow-lg border border-slate-700" onclick="apneBilValg()">
-                <img src="thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-6 h-6 text-white\'></i>'">
+                <img src="../thumbnail_image001.png" alt="Logo" class="w-6 h-6 object-contain bg-white rounded shadow-sm" onerror="this.outerHTML='<i data-lucide=\'truck\' class=\'w-6 h-6 text-white\'></i>'">
             </div>
             <div>
                 <h1 class="text-sm font-black tracking-wider text-white uppercase flex items-center gap-2">
                     <span id="headerTittel">VELG RUTE</span> 
-                    <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v2.3</span>
+                    <span class="bg-blue-900 text-blue-400 border border-blue-700 px-1.5 py-0.5 rounded text-[9px] tracking-widest">v2.4</span>
                 </h1>
                 <p id="cloudStatus" class="text-xs text-yellow-500 font-medium tracking-widest uppercase flex items-center gap-1">
                     <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Kobler til...
@@ -56,6 +49,7 @@
         </button>
     </header>
 
+    <!-- STREAMING_CHUNK:Gjør klar hovedskjermen (Scanning, Søk og Terminal-knapp)... -->
     <main id="hovedskjerm" class="flex-1 flex flex-col overflow-hidden">
         <div class="p-6 flex flex-col items-center justify-center shrink-0 border-b border-slate-800 bg-slate-900/50">
             <button onclick="startScanner()" class="w-40 h-40 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)] border-4 border-slate-800 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 mb-2">
@@ -70,6 +64,10 @@
                     <i data-lucide="search" class="w-4 h-4"></i>
                 </button>
             </form>
+            
+            <button onclick="apneTerminalLager()" class="w-full max-w-xs mt-4 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl border border-slate-700 font-bold flex items-center justify-center gap-2 transition-colors shadow-md">
+                <i data-lucide="building-2" class="w-5 h-5 text-yellow-400"></i> Hent gods fra terminal
+            </button>
         </div>
 
         <div class="flex-1 flex flex-col min-h-0 bg-slate-900">
@@ -83,6 +81,7 @@
         </div>
     </main>
 
+    <!-- STREAMING_CHUNK:Bygger leveringsskjermen (Inn på bil, Ut på terminal, Underleverandør)... -->
     <main id="leveringsskjerm" class="flex-1 flex-col overflow-y-auto p-4 hidden bg-slate-900">
         <div class="flex justify-between items-center mb-6">
             <button onclick="avbrytLevering()" class="bg-slate-800 p-2 rounded-lg text-slate-300 hover:text-white border border-slate-700 shadow-md">
@@ -138,8 +137,11 @@
             <button onclick="oppdaterStatus('På bil', this)" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 active:bg-blue-900 text-white py-4 rounded-xl font-bold shadow-lg flex flex-col items-center justify-center gap-1 transition-colors">
                 <i data-lucide="truck" class="w-6 h-6 text-blue-400"></i> <span class="text-xs uppercase tracking-wider">Inn på bil</span>
             </button>
-            <button onclick="oppdaterStatus('På terminal', this)" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 active:bg-yellow-900 text-white py-4 rounded-xl font-bold shadow-lg flex flex-col items-center justify-center gap-1 transition-colors">
+            <button onclick="apneTerminalValgModal()" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 active:bg-yellow-900 text-white py-4 rounded-xl font-bold shadow-lg flex flex-col items-center justify-center gap-1 transition-colors">
                 <i data-lucide="building" class="w-6 h-6 text-yellow-400"></i> <span class="text-xs uppercase tracking-wider">Ut på terminal</span>
+            </button>
+            <button onclick="oppdaterStatus('Levert til underleverandør', this)" class="col-span-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 active:bg-purple-900 text-white py-4 rounded-xl font-bold shadow-lg flex flex-col items-center justify-center gap-1 transition-colors">
+                <i data-lucide="truck" class="w-6 h-6 text-purple-400"></i> <span class="text-xs uppercase tracking-wider">Til underleverandør</span>
             </button>
         </div>
         
@@ -151,6 +153,71 @@
             <i data-lucide="check-circle" class="w-6 h-6"></i> LEVER TIL KUNDE
         </button>
     </main>
+
+    <!-- STREAMING_CHUNK:Laster inn Modaler for Rutevalg, Avvik, Terminalvalg og Terminallager... -->
+    <!-- Rutevalg Modal (OPPDATERT MED NYE RUTER) -->
+    <div id="bilModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[120] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
+            <h3 class="text-xl font-black mb-2 text-white flex items-center gap-2"><i data-lucide="map" class="text-blue-400"></i> Hvilken rute?</h3>
+            <p class="text-slate-400 mb-4 text-sm">Velg ruten du kjører i dag for å se oppdragene dine.</p>
+            <select id="bilIdInput" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 mb-6 font-bold text-center appearance-none">
+                <option value="">-- Velg Rute --</option>
+                <option value="Nesna">1. Nesna</option>
+                <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
+                <option value="Lovund">3. Lovund</option>
+                <option value="Mo. 1">4. Mo. 1</option>
+                <option value="Mo. 2">5. Mo. 2</option>
+                <option value="Sandnessjøen">6. Sandnessjøen</option>
+                <option value="Mosjøen">7. Mosjøen</option>
+                <option value="Hattfjelldal">8. Hattfjelldal</option>
+                <option value="Terminal Mo">9. Terminal Mo</option>
+                <option value="Terminal Sandnessjøen">10. Terminal Sandnessjøen</option>
+                <option value="Terminal Nesna">11. Terminal Nesna</option>
+                <option value="Tonnes/Nesøy/Selsøyvik">12. Tonnes/Nesøy/Selsøyvik</option>
+            </select>
+            <button onclick="lagreBilValg()" class="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold w-full shadow-lg uppercase tracking-wider">Start Rute</button>
+        </div>
+    </div>
+
+    <!-- Terminal Valg Modal (Ved levering) -->
+    <div id="terminalValgModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[130] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="building" class="text-yellow-400"></i> Velg Terminal</h3>
+            <p class="text-slate-400 text-sm mb-4">Hvilken terminal setter du godset på?</p>
+            
+            <select id="valgtTerminalInput" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-yellow-500 mb-6 font-bold appearance-none">
+                <option value="Terminal Mo">Terminal Mo</option>
+                <option value="Terminal Sandnessjøen">Terminal Sandnessjøen</option>
+                <option value="Terminal Nesna">Terminal Nesna</option>
+            </select>
+            
+            <div class="flex gap-2">
+                <button onclick="lukkTerminalValgModal()" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Avbryt</button>
+                <button onclick="bekreftTerminalLevering()" id="btnTerminalBekreft" class="bg-yellow-600 text-slate-900 px-4 py-3 rounded-xl font-black hover:bg-yellow-500 flex-1 flex items-center justify-center gap-2 shadow-lg"><i data-lucide="check" class="w-4 h-4"></i> Bekreft</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal Lager Modal (Hente fra terminal) -->
+    <div id="terminalLagerModal" class="hidden fixed inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-[130] p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-700 flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="package-search" class="text-yellow-400"></i> Terminal-lager</h3>
+                <button onclick="lukkTerminalLager()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <p class="text-slate-400 text-sm mb-4 shrink-0">Velg terminal for å se tilgjengelig gods, og flytt det over på din rute.</p>
+            
+            <select id="filterTerminalInput" onchange="tegnTerminalLager()" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 mb-4 font-bold appearance-none shrink-0">
+                <option value="Terminal Mo">Terminal Mo</option>
+                <option value="Terminal Sandnessjøen">Terminal Sandnessjøen</option>
+                <option value="Terminal Nesna">Terminal Nesna</option>
+            </select>
+            
+            <div id="terminalGodsListe" class="overflow-y-auto custom-scrollbar flex-1 pr-2 space-y-2">
+                <!-- Javascript fyller denne -->
+            </div>
+        </div>
+    </div>
 
     <!-- Avvik Modal -->
     <div id="avvikModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[130] p-4 backdrop-blur-sm">
@@ -172,27 +239,6 @@
                 <button onclick="document.getElementById('avvikModal').classList.add('hidden')" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-xl font-bold hover:bg-slate-600 flex-1">Avbryt</button>
                 <button onclick="lagreAvvik()" class="bg-red-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-500 flex-1 flex items-center justify-center gap-2 shadow-lg shadow-red-900/50"><i data-lucide="save" class="w-4 h-4"></i> Lagre</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Rutevalg Modal -->
-    <div id="bilModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[120] p-4 backdrop-blur-sm">
-        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
-            <h3 class="text-xl font-black mb-2 text-white flex items-center gap-2"><i data-lucide="map" class="text-blue-400"></i> Hvilken rute?</h3>
-            <p class="text-slate-400 mb-4 text-sm">Velg ruten du kjører i dag for å se oppdragene dine.</p>
-            <select id="bilIdInput" class="w-full bg-slate-900 border border-slate-600 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 mb-6 font-bold text-center appearance-none">
-                <option value="">-- Velg Rute --</option>
-                <option value="Nesna">1. Nesna</option>
-                <option value="Onøy/Lurøy">2. Onøy/Lurøy</option>
-                <option value="Lovund">3. Lovund</option>
-                <!-- Nye Ruter lagt til her! -->
-                <option value="Mo. 1">4. Mo. 1</option>
-                <option value="Mo. 2">5. Mo. 2</option>
-                <option value="Sandnessjøen">6. Sandnessjøen</option>
-                <option value="Mosjøen">7. Mosjøen</option>
-                <option value="Hattfjelldal">8. Hattfjelldal</option>
-            </select>
-            <button onclick="lagreBilValg()" class="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold w-full shadow-lg uppercase tracking-wider">Start Rute</button>
         </div>
     </div>
 
@@ -247,6 +293,7 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Laster inn all logikk og Database-koblinger... -->
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -256,6 +303,7 @@
         let canvas, ctx, isDrawing = false;
         
         let kjenteOppdrag = [];
+        let alleTerminalOppdrag = []; 
         let forsteInnlasting = true;
         let lydKontekst = null;
 
@@ -335,10 +383,11 @@
             spillVarselLyd();
             if(navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("Nytt oppdrag tildelt!", { body: "Du har fått en ny pakke til: " + kundeNavn, icon: "thumbnail_image001.png" });
+                new Notification("Nytt oppdrag tildelt!", { body: "Du har fått en ny pakke til: " + kundeNavn, icon: "../thumbnail_image001.png" });
             }
         }
 
+        // Lytter etter pakker og terminal-oppdateringer
         function startRuteLytter() {
             if (!db || !minBilId) return;
             const { collection, onSnapshot } = window.firebaseModules;
@@ -349,14 +398,24 @@
 
             ruteLytter = onSnapshot(collRef, (snapshot) => {
                 const mineOppdrag = [];
+                alleTerminalOppdrag = []; 
                 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (data.assignedTo === minBilId && !data.signature && !data.photoProof) {
-                        mineOppdrag.push({ _id: doc.id, ...data });
+                    if (!data.signature && !data.photoProof) {
                         
-                        if (!forsteInnlasting && !kjenteOppdrag.includes(doc.id)) {
-                            utlosVarsel(data.mottaker?.navn || "Ukjent kunde");
+                        // Godset tilhører min rute
+                        if (data.assignedTo === minBilId) {
+                            mineOppdrag.push({ _id: doc.id, ...data });
+                            
+                            if (!forsteInnlasting && !kjenteOppdrag.includes(doc.id)) {
+                                utlosVarsel(data.mottaker?.navn || "Ukjent kunde");
+                            }
+                        }
+                        
+                        // Samler opp alt som ligger på noen av terminalene
+                        if (data.status === 'På terminal') {
+                            alleTerminalOppdrag.push({ _id: doc.id, ...data });
                         }
                     }
                 });
@@ -364,6 +423,11 @@
                 kjenteOppdrag = mineOppdrag.map(o => o._id);
                 forsteInnlasting = false;
                 tegnRuteListe(mineOppdrag);
+                
+                // Oppdaterer terminal-lageret live hvis det er åpent
+                if (!document.getElementById('terminalLagerModal').classList.contains('hidden')) {
+                    tegnTerminalLager();
+                }
             });
         }
 
@@ -392,6 +456,9 @@
                 } else if (statusTekst === 'På terminal') {
                     ikonClass = 'text-yellow-400 bg-yellow-900/50';
                     ikonType = 'building';
+                } else if (statusTekst.includes('underleverandør')) {
+                    ikonClass = 'text-purple-400 bg-purple-900/50';
+                    ikonType = 'truck';
                 }
 
                 const div = document.createElement('div');
@@ -428,6 +495,7 @@
             if(data.status && data.status.includes('Avvik')) { statIcon = "alert-triangle"; statColor = "text-red-400"; }
             else if(data.status === 'På bil') { statIcon = "truck"; statColor = "text-blue-400"; }
             else if(data.status === 'På terminal') { statIcon = "building"; statColor = "text-yellow-400"; }
+            else if(data.status && data.status.includes('underleverandør')) { statIcon = "truck"; statColor = "text-purple-400"; }
             
             document.getElementById('infoStatus').innerHTML = `<i data-lucide="${statIcon}" class="w-4 h-4 ${statColor}"></i> <span class="${data.status && data.status.includes('Avvik') ? 'text-red-400' : ''}">${data.status || 'Ubehandlet'}</span>`;
             
@@ -515,6 +583,108 @@
                 );
             } else { utforLagring(null); }
         }
+
+        // --- TERMINAL VALG (Sette ut på terminal) ---
+        window.apneTerminalValgModal = function() {
+            document.getElementById('terminalValgModal').classList.remove('hidden');
+        }
+
+        window.lukkTerminalValgModal = function() {
+            document.getElementById('terminalValgModal').classList.add('hidden');
+        }
+
+        window.bekreftTerminalLevering = async function() {
+            const term = document.getElementById('valgtTerminalInput').value;
+            if(!term || !db || !gjeldendeOrdreId) return;
+            
+            const btn = document.getElementById('btnTerminalBekreft');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Vent...';
+            btn.disabled = true;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
+            try {
+                const hendelse = { status: 'Mottatt på terminal', tidspunkt: Date.now(), rute: term, utfortAv: minBilId };
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', gjeldendeOrdreId), {
+                    status: 'På terminal',
+                    assignedTo: term,
+                    historikk: arrayUnion(hendelse)
+                });
+                lukkTerminalValgModal();
+                avbrytLevering();
+                visMelding("Suksess", "Pakken er levert på " + term);
+            } catch(e) {
+                visMelding("Feil", e.message);
+            } finally {
+                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Bekreft';
+                btn.disabled = false;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        // --- HENT FRA TERMINAL (Terminal-lager) ---
+        window.apneTerminalLager = function() {
+            document.getElementById('terminalLagerModal').classList.remove('hidden');
+            // Sett dropdown til min egen terminal hvis jeg kjører terminal
+            if(minBilId && minBilId.startsWith("Terminal")) {
+                document.getElementById('filterTerminalInput').value = minBilId;
+            }
+            tegnTerminalLager();
+        }
+
+        window.lukkTerminalLager = function() {
+            document.getElementById('terminalLagerModal').classList.add('hidden');
+        }
+
+        window.tegnTerminalLager = function() {
+            const term = document.getElementById('filterTerminalInput').value;
+            const container = document.getElementById('terminalGodsListe');
+            container.innerHTML = '';
+            
+            const aktueltGods = alleTerminalOppdrag.filter(o => o.assignedTo === term);
+            
+            if(aktueltGods.length === 0) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center p-8 opacity-50"><i data-lucide="check-circle" class="w-10 h-10 text-slate-500 mb-2"></i><p class="text-slate-400 text-sm font-bold">Ingen pakker på ${term}.</p></div>`;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                return;
+            }
+            
+            aktueltGods.forEach(o => {
+                container.innerHTML += `
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 mb-2 flex justify-between items-center shadow-sm">
+                        <div class="overflow-hidden pr-2">
+                            <div class="text-white font-black text-sm truncate">${o.sendingsnummer || o._id}</div>
+                            <div class="text-slate-400 text-xs truncate">${o.mottaker?.navn || 'Ukjent'}</div>
+                            <div class="text-slate-500 text-[10px] mt-0.5"><i data-lucide="map-pin" class="w-3 h-3 inline"></i> ${o.mottaker?.postnr || ''} ${o.mottaker?.sted || ''}</div>
+                        </div>
+                        <button onclick="flyttTilMinRute('${o._id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md transition-transform active:scale-95 shrink-0 flex flex-col items-center gap-1">
+                            <i data-lucide="download" class="w-4 h-4"></i> Ta over
+                        </button>
+                    </div>
+                `;
+            });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.flyttTilMinRute = async function(ordreId) {
+            if(!db || !minBilId) {
+                visMelding("Feil", "Du må velge din egen rute først!");
+                return;
+            }
+            const { doc, updateDoc, arrayUnion } = window.firebaseModules;
+            try {
+                const hendelse = { status: 'På bil', tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Hentet fra terminal' };
+                await updateDoc(doc(db, 'artifacts', configAppId, 'public', 'data', 'fraktbrev', ordreId), {
+                    status: 'På bil',
+                    assignedTo: minBilId,
+                    historikk: arrayUnion(hendelse)
+                });
+                // Pakken forsvinner magisk fra listen pga live snapshot!
+            } catch(e) {
+                visMelding("Feil", e.message);
+            }
+        }
+
 
         // --- AVVIK FUNKSJONER ---
         window.apneAvvikModal = function() {
