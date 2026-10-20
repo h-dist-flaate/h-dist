@@ -19,7 +19,6 @@
     </script>
 
     <style>
-        /* STREAMING_CHUNK:Importerer fonter og grunnleggende stil... */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
         #map { height: 100%; min-height: 400px; width: 100%; border-radius: 0.75rem; z-index: 1; }
@@ -42,7 +41,7 @@
         .etikett-ark { background-color: white; width: 102mm; height: 192mm; box-sizing: border-box; padding: 5mm; color: black; font-family: Arial, sans-serif; position: relative; page-break-after: always; margin-bottom: 20px;}
         .etikett-ark:last-child { page-break-after: auto; margin-bottom: 0; }
 
-        /* STREAMING_CHUNK:Utskrifts-stiler... */
+        /* Utskrifts-stiler (PC FIX) */
         @media print {
             @page { margin: 0; }
             body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; height: auto !important;}
@@ -82,7 +81,6 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK:Bygger header og menyer... -->
     <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10 relative shrink-0">
         <div class="flex items-center gap-4">
@@ -94,7 +92,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.2</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.4</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -148,7 +146,6 @@
         </div>
     </main>
 
-    <!-- STREAMING_CHUNK:Laster inn Modaler for Arkiv og Tildeling... -->
     <main id="view-faktura" class="flex-1 p-4 hidden overflow-y-auto custom-scrollbar bg-slate-900">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-4">
@@ -162,6 +159,7 @@
                         <thead class="bg-slate-900 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                             <tr>
                                 <th class="p-4 border-b border-slate-700">Ordrenr</th>
+                                <th class="p-4 border-b border-slate-700">Avsender</th>
                                 <th class="p-4 border-b border-slate-700">Mottaker</th>
                                 <th class="p-4 border-b border-slate-700">Vekt</th>
                                 <th class="p-4 border-b border-slate-700 text-center">Dokumentasjon</th>
@@ -188,6 +186,7 @@
                         <thead class="bg-slate-900 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                             <tr>
                                 <th class="p-4 border-b border-slate-700">Ordrenr</th>
+                                <th class="p-4 border-b border-slate-700">Avsender</th>
                                 <th class="p-4 border-b border-slate-700">Mottaker</th>
                                 <th class="p-4 border-b border-slate-700 text-center">Dokumentasjon</th>
                                 <th class="p-4 border-b border-slate-700 text-right">Status</th>
@@ -249,7 +248,6 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK:Laster inn Fraktbrev Visning (For admin og utskrift)... -->
     <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
             <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -301,7 +299,6 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK:Laster inn NY Redigeringsmodal MED Varelinjer... -->
     <!-- REDIGER MODAL -->
     <div id="redigerModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[160] p-4 backdrop-blur-sm overflow-y-auto">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-4xl border border-slate-700 relative flex flex-col my-auto max-h-[90vh]">
@@ -371,7 +368,6 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK:Gjør klar HTML for det usynlige A4-arket... -->
     <!-- UTKSRIFTSVISNING A4 (GJEMT FREM TIL DU TRYKKER PÅ SKRIV UT) -->
     <div id="utskriftsVisning">
         <div class="a4-ark mx-auto">
@@ -486,7 +482,6 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK:Laster inn Javascript og databasefunksjoner... -->
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -629,6 +624,7 @@
                     else if (erAvvik) { ikon = "alert-triangle"; farge = "text-red-400"; bg = "bg-red-900/30 border-red-900"; }
                     else if (statusTekst === 'På bil') { ikon = "truck"; farge = "text-blue-400"; bg = "bg-blue-900/30 border-blue-900"; }
                     else if (statusTekst === 'På terminal') { ikon = "building"; farge = "text-yellow-400"; bg = "bg-yellow-900/30 border-yellow-900"; }
+                    else if (statusTekst.includes('underleverandør')) { ikon = "truck"; farge = "text-purple-400"; bg = "bg-purple-900/30 border-purple-900"; }
                     
                     let tildelBadge = '';
                     if (!erLevert) {
@@ -732,12 +728,13 @@
             const sokFelt = erFerdig ? document.getElementById('sokeFeltArkiv').value.toLowerCase() : '';
 
             if(dataListe.length === 0) {
-                container.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500">Ingen oppdrag i denne mappen.</td></tr>`;
+                const colSpan = erFerdig ? 5 : 6;
+                container.innerHTML = `<tr><td colspan="${colSpan}" class="p-8 text-center text-slate-500">Ingen oppdrag i denne mappen.</td></tr>`;
                 return;
             }
 
             dataListe.forEach(ordre => {
-                const matchSok = erFerdig === false || (`${ordre.sendingsnummer||''} ${ordre.mottaker?.navn||''}`.toLowerCase()).includes(sokFelt);
+                const matchSok = erFerdig === false || (`${ordre.sendingsnummer||''} ${ordre.avsender?.navn||''} ${ordre.mottaker?.navn||''}`.toLowerCase()).includes(sokFelt);
                 if (!matchSok) return;
 
                 let totalVekt = 0;
@@ -765,8 +762,12 @@
                         <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">Status: ${ordre.status || 'Levert'}</div>
                     </td>
                     <td class="p-4 align-middle">
+                        <div class="font-bold text-slate-300">${ordre.avsender?.navn || 'Ukjent'}</div>
+                        <div class="text-[10px] text-slate-500">${ordre.avsender?.postnr || ''} ${ordre.avsender?.sted || ''}</div>
+                    </td>
+                    <td class="p-4 align-middle">
                         <div class="font-bold text-slate-200">${ordre.mottaker?.navn || 'Ukjent'}</div>
-                        <div class="text-xs text-slate-400">${ordre.mottaker?.postnr || ''} ${ordre.mottaker?.sted || ''}</div>
+                        <div class="text-[10px] text-slate-500">${ordre.mottaker?.postnr || ''} ${ordre.mottaker?.sted || ''}</div>
                     </td>
                     ${!erFerdig ? `<td class="p-4 align-middle text-slate-300 font-medium">${totalVekt.toFixed(1)} kg</td>` : ''}
                     <td class="p-4 align-middle text-center"><div class="flex items-center justify-center gap-2">${dokInfoKnapp}${sporingKnapp}${bildeKnapp}</div></td>
