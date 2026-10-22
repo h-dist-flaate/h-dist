@@ -93,7 +93,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black tracking-wider text-white">FLÅTESENTRAL</h1>
-                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.5</span></p>
+                <p class="text-xs text-slate-400 font-medium tracking-widest uppercase flex items-center gap-2">Live Dispatch & Administrasjon <span class="bg-blue-900/50 text-blue-400 border border-blue-700/50 px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest">v3.6</span></p>
             </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -248,7 +248,6 @@
         </div>
     </div>
 
-    <!-- FRAKTBREV MODAL -->
     <div id="fraktbrevModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-700 relative flex flex-col max-h-[90vh]">
             <button onclick="document.getElementById('fraktbrevModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -369,7 +368,7 @@
         </div>
     </div>
 
-    <!-- UTKSRIFTSVISNING A4 -->
+    <!-- UTKSRIFTSVISNING A4 (GJEMT FREM TIL DU TRYKKER PÅ SKRIV UT) -->
     <div id="utskriftsVisning">
         <div class="a4-ark mx-auto">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 5mm; margin-bottom: 5mm;">
@@ -480,27 +479,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Scanner Modal -->
-    <div id="scannerModal" class="hidden fixed inset-0 bg-slate-950/90 flex flex-col items-center justify-center z-[90] p-4 no-print backdrop-blur-sm">
-        <div class="w-full max-w-lg bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700">
-            <button type="button" onclick="lukkScanner()" class="absolute top-4 right-4 bg-slate-800 hover:bg-red-500 text-white rounded-full p-2 z-10 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
-            <div class="p-6 bg-slate-800 border-b border-slate-700 text-center">
-                <h3 class="font-black text-white text-xl">Skann Etikett</h3>
-                <p class="text-sm text-slate-400 mt-1">Sikt på strekkoden for å hente nummer.</p>
-            </div>
-            <div id="reader" style="width: 100%; min-height: 350px; background: black;"></div>
-        </div>
-    </div>
-
-    <!-- Meldingsboks -->
-    <div id="msgModal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center z-[100] p-4 no-print backdrop-blur-sm">
-        <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-slate-700">
-            <h3 id="msgModalTitle" class="text-xl font-black mb-2 text-white mt-4"></h3>
-            <p id="msgModalText" class="text-slate-300 mb-6 text-sm whitespace-pre-wrap"></p>
-            <button onclick="document.getElementById('msgModal').classList.add('hidden')" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold w-full shadow-lg">OK</button>
         </div>
     </div>
 
@@ -886,12 +864,17 @@
         }
 
         window.skrivUtEtikett = function() {
+            // Fiks for mobil/PC: Gjem alt manuelt før utskrift for etiketter også
             Array.from(document.body.children).forEach(child => {
                 if (child.id !== 'etikettVisning' && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
                     child.classList.add('skjul-ved-print');
                 }
             });
-            setTimeout(() => { window.print(); }, 400);
+            
+            // Magisk forsinkelse slik at nettleseren rekker å tegne opp før print-dialogen
+            setTimeout(() => {
+                window.print();
+            }, 400);
         }
 
         window.skrivUtÅpnetFraktbrev = function() {
@@ -951,6 +934,7 @@
                 else { gpsTekst.innerText = ordre.photoProof ? 'Fotobevis' : 'Signert elektronisk'; }
             } else { sigImg.style.display = 'none'; gpsTekst.innerText = ''; }
 
+            // Generer strekkode og skriv ut
             setTimeout(() => {
                 const barcodeSvg = document.getElementById('printStrekkode');
                 try { 
@@ -961,16 +945,21 @@
                 document.body.classList.add('print-mode-a4');
                 document.getElementById('utskriftsVisning').style.display = 'block';
                 
+                // Magisk forsinkelse slik at nettleseren rekker å tegne opp A4-arket før print-dialogen tar bilde!
                 Array.from(document.body.children).forEach(child => {
                     if (child.id !== 'utskriftsVisning' && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
                         child.classList.add('skjul-ved-print');
                     }
                 });
 
-                setTimeout(() => { window.print(); }, 400);
+                setTimeout(() => {
+                    window.print();
+                }, 400);
+                
             }, 100);
         }
 
+        // Fjern utskriftsmodus når vinduet lukkes
         window.onafterprint = function() {
             if(document.body.classList.contains('print-mode-a4')) {
                 document.body.classList.remove('print-mode-a4');
@@ -980,6 +969,7 @@
                 document.body.classList.remove('print-mode-label');
             }
             
+            // Vi må fjerne den manuelle "skjul"-klassen slik at skjermen kommer tilbake!
             document.querySelectorAll('.skjul-ved-print').forEach(child => {
                 child.classList.remove('skjul-ved-print');
             });
