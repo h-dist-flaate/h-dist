@@ -17,7 +17,7 @@
     </script>
 
     <style>
-        /* STREAMING_CHUNK:Importerer fonter og grunnleggende stil... */
+        /* Importerer fonter og grunnleggende stil... */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overscroll-behavior-y: contain; }
         #signaturePad { border: 2px dashed #475569; border-radius: 0.75rem; cursor: crosshair; touch-action: none; background: #f8fafc; }
@@ -28,7 +28,7 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- STREAMING_CHUNK:Bygger header og rute-overskrift... -->
+    <!-- Bygger header og rute-overskrift... -->
     <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg shrink-0 z-10">
         <div class="flex items-center gap-3">
             <div class="bg-slate-800 p-2 rounded-lg shadow-blue-900/50 shadow-lg border border-slate-700" onclick="apneBilValg()">
@@ -49,7 +49,7 @@
         </button>
     </header>
 
-    <!-- STREAMING_CHUNK:Gjør klar hovedskjermen (Scanning, Søk og Terminal-knapp)... -->
+    <!-- Gjør klar hovedskjermen (Scanning, Søk og Terminal-knapp)... -->
     <main id="hovedskjerm" class="flex-1 flex flex-col overflow-hidden">
         <div class="p-6 flex flex-col items-center justify-center shrink-0 border-b border-slate-800 bg-slate-900/50">
             <button onclick="startScanner()" class="w-40 h-40 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)] border-4 border-slate-800 flex flex-col items-center justify-center gap-2 transition-transform active:scale-95 mb-2">
@@ -81,7 +81,7 @@
         </div>
     </main>
 
-    <!-- STREAMING_CHUNK:Bygger leveringsskjermen (Inn på bil, Ut på terminal, Underleverandør)... -->
+    <!-- Bygger leveringsskjermen (Inn på bil, Ut på terminal, Underleverandør)... -->
     <main id="leveringsskjerm" class="flex-1 flex-col overflow-y-auto p-4 hidden bg-slate-900">
         <div class="flex justify-between items-center mb-6">
             <button onclick="avbrytLevering()" class="bg-slate-800 p-2 rounded-lg text-slate-300 hover:text-white border border-slate-700 shadow-md">
@@ -154,7 +154,7 @@
         </button>
     </main>
 
-    <!-- STREAMING_CHUNK:Laster inn Modaler for Rutevalg, Avvik, Terminalvalg og Terminallager... -->
+    <!-- Laster inn Modaler for Rutevalg, Avvik, Terminalvalg og Terminallager... -->
     <!-- Rutevalg Modal (OPPDATERT MED NYE RUTER) -->
     <div id="bilModal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[120] p-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-700">
@@ -293,7 +293,7 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK:Laster inn all logikk og Database-koblinger... -->
+    <!-- Laster inn all logikk og Database-koblinger... -->
     <script>
         const firebaseConfig = { apiKey: "AIzaSyBVI-jvgnBZKtGap-2V9EnROnQaFu8XjvA", authDomain: "fraktbrev-h-dist.firebaseapp.com", projectId: "fraktbrev-h-dist", storageBucket: "fraktbrev-h-dist.firebasestorage.app", messagingSenderId: "1050286503957", appId: "1:1050286503957:web:f7fc08c92a1f862e06f61c" };
         const configAppId = "fraktbrev-h-dist";
@@ -352,7 +352,7 @@
 
         window.lagreBilValg = function() {
             const val = document.getElementById('bilIdInput').value;
-            if(!val) { alert("Vennligst velg en rute fra listen."); return; }
+            if(!val) { visMelding("Mangler rute", "Vennligst velg en rute fra listen."); return; }
             minBilId = val;
             localStorage.setItem('hdist_rute_id', minBilId);
             document.getElementById('headerTittel').innerText = minBilId.toUpperCase();
@@ -466,15 +466,16 @@
                 div.onclick = () => visLeveringPåSkjerm(ordre);
                 
                 div.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="flex items-center gap-3 overflow-hidden w-full">
                         <div class="${ikonClass} p-2 rounded-lg shrink-0"><i data-lucide="${ikonType}" class="w-6 h-6"></i></div>
-                        <div class="truncate">
-                            <h4 class="text-white font-bold truncate">${ordre.mottaker?.navn || 'Ukjent'}</h4>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[11px] text-slate-400 truncate mb-0.5"><span class="text-slate-500">Fra:</span> <span class="font-medium text-slate-300">${ordre.avsender?.navn || 'Ukjent'}</span> ${ordre.avsender?.sted ? '- ' + ordre.avsender.sted : ''}</div>
+                            <h4 class="text-white font-bold text-sm truncate"><span class="text-slate-500 font-normal text-[11px]">Til:</span> ${ordre.mottaker?.navn || 'Ukjent'}</h4>
                             <p class="text-slate-400 text-xs truncate">${ordre.mottaker?.sted || ''}</p>
                             <p class="text-slate-500 text-[10px] font-black tracking-widest mt-1 ${statusTekst.includes('Avvik') ? 'text-red-400' : ''}">${statusTekst.toUpperCase()}</p>
                         </div>
                     </div>
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 shrink-0"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 shrink-0 ml-2"></i>
                 `;
                 liste.appendChild(div);
             });
@@ -750,7 +751,7 @@
 
         window.lagreSignatur = async function() {
             const blank = document.createElement('canvas'); blank.width = canvas.width; blank.height = canvas.height;
-            if (canvas.toDataURL() === blank.toDataURL()) { alert("Vennligst signer først."); return; }
+            if (canvas.toDataURL() === blank.toDataURL()) { visMelding("Mangler signatur", "Vennligst signer først."); return; }
             const b64 = canvas.toDataURL("image/png");
             const hendelse = { status: 'Levert', tidspunkt: Date.now(), rute: minBilId, utfortAv: 'Sjåfør (Signatur)' };
             sendLeveringTilSky({ signature: b64, status: 'Levert', signertTidspunkt: Date.now(), historikk: window.firebaseModules.arrayUnion(hendelse) }, 'btnGodkjennSignatur', 'LAGRE SIGNATUR');
