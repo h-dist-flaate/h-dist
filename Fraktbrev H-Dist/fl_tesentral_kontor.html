@@ -19,7 +19,6 @@
     </script>
 
     <style>
-        /* STREAMING_CHUNK:Importerer fonter og grunnleggende stil... */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
         #map { height: 100%; min-height: 400px; width: 100%; border-radius: 0.75rem; z-index: 1; }
@@ -42,7 +41,7 @@
         .etikett-ark { background-color: white; width: 102mm; height: 192mm; box-sizing: border-box; padding: 5mm; color: black; font-family: Arial, sans-serif; position: relative; page-break-after: always; margin-bottom: 20px;}
         .etikett-ark:last-child { page-break-after: auto; margin-bottom: 0; }
 
-        /* STREAMING_CHUNK:Utskrifts-stiler... */
+        /* Utskrifts-stiler */
         @media print {
             @page { margin: 0; }
             body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; height: auto !important;}
@@ -651,6 +650,10 @@
                     }
                     const kartKnapp = harGPS ? `<button onclick="kartFokus(${ordre.gps.lat}, ${ordre.gps.lng})" class="mt-2 bg-slate-800 p-1.5 rounded hover:bg-slate-600 text-green-400 shadow-sm" title="Vis på kart"><i data-lucide="map-pin" class="w-4 h-4"></i></button>` : '';
 
+                    // Henter og formaterer adresser for visning i listen
+                    const avsAdresseFull = [ordre.avsender?.adresse, ordre.avsender?.postnr, ordre.avsender?.sted].filter(Boolean).join(' ');
+                    const motAdresseFull = [ordre.mottaker?.adresse, ordre.mottaker?.postnr, ordre.mottaker?.sted].filter(Boolean).join(' ');
+
                     const element = document.createElement('div');
                     element.className = `p-3 rounded-lg border border-slate-600 flex items-center justify-between transition-all hover:border-slate-500 ${bg}`;
                     element.innerHTML = `
@@ -658,7 +661,10 @@
                             <div class="${farge} pt-1"><i data-lucide="${ikon}" class="w-5 h-5"></i></div>
                             <div>
                                 <div class="font-bold text-white text-sm">${ordre.sendingsnummer || 'Uten nr'} <span class="text-[10px] ${erAvvik ? 'text-red-400 font-black' : 'text-slate-400 font-normal'} ml-1">${statusTekst}</span></div>
-                                <comment-tag id="1"><div class="text-xs text-slate-400 truncate max-w-[150px]">${ordre.mottaker?.navn || ''}</div></comment-tag id="1" text="Her utvider vi bredden litt (max-w-[250px]) og legger til både avsender og mottaker for bedre oversikt." type="suggestion"><div class="text-xs text-slate-400 truncate max-w-[250px]"><span class="text-slate-500">Fra:</span> ${ordre.avsender?.navn || 'Ukjent'} <span class="text-slate-500 ml-1">Til:</span> ${ordre.mottaker?.navn || 'Ukjent'}</div>
+                                <div class="text-[11px] text-slate-400 mt-1 space-y-0.5 pr-2 max-w-[220px] sm:max-w-[280px]">
+                                    <div class="truncate" title="${ordre.avsender?.navn || 'Ukjent'} - ${avsAdresseFull}"><span class="text-slate-500">Fra:</span> <span class="font-medium text-slate-300">${ordre.avsender?.navn || 'Ukjent'}</span> ${avsAdresseFull ? '- ' + avsAdresseFull : ''}</div>
+                                    <div class="truncate" title="${ordre.mottaker?.navn || 'Ukjent'} - ${motAdresseFull}"><span class="text-slate-500">Til:</span> <span class="font-medium text-slate-300">${ordre.mottaker?.navn || 'Ukjent'}</span> ${motAdresseFull ? '- ' + motAdresseFull : ''}</div>
+                                </div>
                                 ${tildelBadge}
                             </div>
                         </div>
@@ -1185,7 +1191,6 @@
             } catch (e) { alert("Kunne ikke oppdatere: " + e.message); }
         }
 
-        // --- STREAMING_CHUNK:Lager den nye redigeringslogikken med varelinjer... ---
         window.apneRedigerModal = function() {
             if(!aktivtFraktbrevForUtskrift) return;
             const o = aktivtFraktbrevForUtskrift;
